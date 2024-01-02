@@ -7,6 +7,10 @@ public class Driver {
     private String password;
     private String contact;
 
+    public  Driver(){
+
+    }
+
     public Driver(int id, String name, String email, String password, String contact) {
         this.id = id;
         this.name = name;

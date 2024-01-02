@@ -29,7 +29,7 @@ public class MainActivity extends AppCompatActivity {
         // Set the OnClickListener
         button2.setOnClickListener(v -> {
             // Redirect to RegistrationActivity
-            Intent intent = new Intent(MainActivity.this, RegistrationActivity.class);
+            Intent intent = new Intent(MainActivity.this, LoginActivity.class);
             startActivity(intent);
         });
 

@@ -1,6 +1,8 @@
 package com.example.basic;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
@@ -42,6 +44,11 @@ public class LoginActivity extends AppCompatActivity {
 
         DatabaseHelper1 databaseHelper = new DatabaseHelper1(this);
 
+        if (isLoggedIn()) {
+            redirectToRegisterDriver();
+        }
+
+
         Button loginBtn = findViewById(R.id.loginBtn);
         TextView registerTextView = findViewById(R.id.textView6);
         registerTextView.setOnClickListener(v -> {
@@ -65,9 +72,11 @@ public class LoginActivity extends AppCompatActivity {
 
                 if (authenticateUser(email,password)){
 
-                    Intent intent = new Intent(LoginActivity.this,DriverRegistration.class);
-                    startActivity(intent);
-                    finish();
+                    saveLoginState();
+                    redirectToRegisterDriver();
+//                    Intent intent = new Intent(LoginActivity.this,DriverRegistration.class);
+//                    startActivity(intent);
+//                    finish();
 
                 }else {
                     Toast.makeText(LoginActivity.this,"Invalid Credentials",Toast.LENGTH_SHORT).show();
@@ -122,6 +131,23 @@ public class LoginActivity extends AppCompatActivity {
 
         // Set click listener for the sign-in button
         signInButton.setOnClickListener(view -> signIn());
+    }
+
+    private void saveLoginState() {
+        SharedPreferences sharedPreferences = getSharedPreferences("loginPrefs", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putBoolean("isLoggedIn", true);
+        editor.apply();
+    }
+
+    private boolean isLoggedIn() {
+        SharedPreferences sharedPreferences = getSharedPreferences("loginPrefs", Context.MODE_PRIVATE);
+        return sharedPreferences.getBoolean("isLoggedIn", false);
+    }
+    private void redirectToRegisterDriver() {
+        Intent intent = new Intent(LoginActivity.this, DriverRegistration.class);
+        startActivity(intent);
+        finish();
     }
 
     private void signIn() {

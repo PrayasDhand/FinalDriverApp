@@ -160,7 +160,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:drawablePadding="10dp"
-                android:text="Prayas Dhand"
+            android:text="Prayas Dhand"
                 android:textColor="@color/black"/>
 
         </com.google.android.material.textfield.TextInputLayout>
@@ -174,10 +174,11 @@
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/emailText_profile"
                 android:layout_width="match_parent"
+                android:text="prayasdhand13@gmail.com"
                 android:layout_height="wrap_content"
                 android:drawablePadding="10dp"
                 android:textColor="@color/black"
-                android:text="prayasdhand13@gmail.com"/>
+               />
 
 
         </com.google.android.material.textfield.TextInputLayout>
@@ -191,10 +192,11 @@
             <com.google.android.material.textfield.TextInputEditText
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:text="***********"
                 android:id="@+id/passwordText_profile"
                 android:drawablePadding="10dp"
                 android:textColor="@color/black"
-                android:text="**************"/>
+               />
 
 
         </com.google.android.material.textfield.TextInputLayout>
@@ -209,9 +211,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:drawablePadding="10dp"
+                android:text="8572859197"
                 android:id="@+id/contactText_profile"
                 android:textColor="@color/black"
-                android:text="8572859197"/>
+                />
 
 
         </com.google.android.material.textfield.TextInputLayout>
@@ -220,6 +223,16 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Save Details"
+            android:fontFamily="sans-serif-black"
+            android:textStyle="bold"
+            android:background="@drawable/button_background"
+            android:layout_marginTop="10dp"/>
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/logout_btn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Logout"
             android:fontFamily="sans-serif-black"
             android:textStyle="bold"
             android:background="@drawable/button_background"
