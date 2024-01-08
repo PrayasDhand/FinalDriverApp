@@ -1,6 +1,8 @@
 package com.example.basic;
 
+import android.app.AlertDialog;
 import android.app.DatePickerDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
@@ -17,6 +19,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.AppCompatButton;
 
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
@@ -79,28 +82,62 @@ public class DriverRegistration extends AppCompatActivity {
         circularImageViewDriver.setOnClickListener(this::onChooseDriverImageClick);
 
 
-        Button chooseLicenseImageBtn = findViewById(R.id.chooseLicenseImageBtn);
+        AppCompatButton chooseLicenseImageBtn = findViewById(R.id.chooseLicenseImageBtn);
         chooseLicenseImageBtn.setOnClickListener(this::onChooseLicenseImageClick);
         databaseHelper = new DatabaseHelper(this);
         ocrHelper = new TesseractHelper(this, "eng");
     }
     private void showDatePickerDialog() {
+        // Get the current date
         Calendar calendar = Calendar.getInstance();
-        int year = calendar.get(Calendar.YEAR);
-        int month = calendar.get(Calendar.MONTH);
-        int day = calendar.get(Calendar.DAY_OF_MONTH);
+        int currentYear = calendar.get(Calendar.YEAR);
+        int currentMonth = calendar.get(Calendar.MONTH);
+        int currentDay = calendar.get(Calendar.DAY_OF_MONTH);
 
-        DatePickerDialog datePickerDialog = new DatePickerDialog(this, (view, year1, monthOfYear, dayOfMonth) -> {
-            String selectedDate = String.format(Locale.getDefault(), "%04d-%02d-%02d", year1, monthOfYear + 1, dayOfMonth);
+        // Calculate the minimum birthdate for 18 years old
+        int minBirthYear = currentYear - 18;
+        int minBirthMonth = currentMonth;
+        int minBirthDay = currentDay;
+
+        // Create the DatePickerDialog
+        DatePickerDialog datePickerDialog = new DatePickerDialog(this, (view, year, monthOfYear, dayOfMonth) -> {
+            String selectedDate = String.format(Locale.getDefault(), "%04d-%02d-%02d", year, monthOfYear + 1, dayOfMonth);
             dobEditText.setText(selectedDate);
-        }, year, month, day);
+        }, minBirthYear, minBirthMonth, minBirthDay);
 
+        // Set the maximum date to the current date
+        datePickerDialog.getDatePicker().setMaxDate(calendar.getTimeInMillis());
+
+        // Show the DatePickerDialog
         datePickerDialog.show();
     }
     private void onChooseDriverImageClick(View view) {
-        Intent intent = new Intent(Intent.ACTION_PICK);
-        intent.setType("image/*");
-        startActivityForResult(intent, PICK_DRIVER_IMAGE_REQUEST);
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Choose Image Source");
+        builder.setItems(new CharSequence[]{"Gallery", "Camera"}, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                switch (which) {
+                    case 0:
+                        // Choose from gallery
+                        Intent galleryIntent = new Intent(Intent.ACTION_PICK);
+                        galleryIntent.setType("image/*");
+                        startActivityForResult(galleryIntent, PICK_DRIVER_IMAGE_REQUEST);
+                        break;
+
+                    case 1:
+                        // Open the camera
+                        Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                        if (cameraIntent.resolveActivity(getPackageManager()) != null) {
+                            startActivityForResult(cameraIntent, PICK_DRIVER_IMAGE_REQUEST);
+                        } else {
+                            Toast.makeText(DriverRegistration.this, "Camera not available", Toast.LENGTH_SHORT).show();
+                        }
+                        break;
+                }
+            }
+        });
+        builder.show();
     }
 
     private void onChooseLicenseImageClick(View view) {

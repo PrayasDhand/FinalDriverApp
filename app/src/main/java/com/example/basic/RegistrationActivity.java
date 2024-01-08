@@ -2,9 +2,12 @@ package com.example.basic;
 
 import android.content.ContentValues;
 import android.content.Intent;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.os.Handler;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -12,7 +15,6 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
-
 
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
@@ -34,12 +36,64 @@ public class RegistrationActivity extends AppCompatActivity {
         setContentView(R.layout.register_page);
 
         // Set up the UI components
+        EditText nameEditText = findViewById(R.id.edText1);
+        EditText emailEditText = findViewById(R.id.editText2);
+        EditText passwordEditText = findViewById(R.id.editText3);
+        EditText contactEditText = findViewById(R.id.editText4);
+
+        // Example: Set up a TextWatcher for name validation
+        nameEditText.addTextChangedListener(new SimpleTextWatcher(nameEditText, this::validateName));
+
+        // Example: Set up a TextWatcher for email validation
+        emailEditText.addTextChangedListener(new SimpleTextWatcher(emailEditText, this::validateEmail));
+
+        // Example: Set up a TextWatcher for password validation
+        passwordEditText.addTextChangedListener(new SimpleTextWatcher(passwordEditText, this::validatePassword));
+
+        // Example: Set up a TextWatcher for contact validation
+        contactEditText.addTextChangedListener(new SimpleTextWatcher(contactEditText, this::validateContact));
 
         // Example: Set up a button click listener
         findViewById(R.id.regBtn).setOnClickListener(v -> {
             // Call the method to handle registration when the button is clicked
             handleRegistration();
         });
+    }
+
+    private void validateName(String name) {
+        EditText nameEditText = findViewById(R.id.edText1);
+        if (name.isEmpty()) {
+            nameEditText.setError("Please enter your name");
+        } else {
+            nameEditText.setError(null);
+        }
+    }
+
+    private void validateEmail(String email) {
+        EditText emailEditText = findViewById(R.id.editText2);
+        if (email.isEmpty() || !isValidEmail(email)) {
+            emailEditText.setError("Please enter a valid email address");
+        } else {
+            emailEditText.setError(null);
+        }
+    }
+
+    private void validatePassword(String password) {
+        EditText passwordEditText = findViewById(R.id.editText3);
+        if (password.isEmpty() || !isStrongPassword(password)) {
+            passwordEditText.setError("Password should contain one uppercase, one lowercase, and one special character");
+        } else {
+            passwordEditText.setError(null);
+        }
+    }
+
+    private void validateContact(String contact) {
+        EditText contactEditText = findViewById(R.id.editText4);
+        if (contact.isEmpty() || contact.length() != 10) {
+            contactEditText.setError("Phone number should be of 10 digits");
+        } else {
+            contactEditText.setError(null);
+        }
     }
 
     void handleRegistration() {
@@ -54,32 +108,17 @@ public class RegistrationActivity extends AppCompatActivity {
         String password = passwordEditText.getText().toString();
         String contact = contactEditText.getText().toString();
 
-        if (name.isEmpty()) {
-            nameEditText.setError("Please enter your name");
-            return;
-        }
-
-        if (email.isEmpty()) {
-            emailEditText.setError("Please enter your email");
-            return;
-        }
-
-        if (password.isEmpty()) {
-            passwordEditText.setError("Please enter your password");
-            return;
-        }
-
-        if (contact.isEmpty()) {
-            contactEditText.setError("Please enter your contact number");
-            return;
-        }
-
-
         // Check if any field is empty before proceeding with registration
         if (name.isEmpty() || email.isEmpty() || password.isEmpty() || contact.isEmpty()) {
             Toast.makeText(this, "Please fill in all fields", Toast.LENGTH_SHORT).show();
             return;
         }
+
+        if (isUserAlreadyRegistered(email)) {
+            Toast.makeText(this, "User with this email is already registered", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
 
         // Create a Driver object
         Driver driver = new Driver(0, name, email, password, contact);
@@ -127,9 +166,72 @@ public class RegistrationActivity extends AppCompatActivity {
         }
     }
 
+    private boolean isUserAlreadyRegistered(String email) {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+
+        String[] projection = {"id"};
+
+        String selection = "email = ?";
+        String[] selectionArgs = {email};
+
+        Cursor cursor = db.query(
+                "Drivers",
+                projection,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                null
+        );
+
+        boolean isUserRegistered = cursor.moveToFirst();
+
+        // Close the cursor and database
+        cursor.close();
+        db.close();
+
+        return isUserRegistered;
+    }
+
+    private boolean isStrongPassword(String password) {
+        return password.matches(".*[A-Z].*") && password.matches(".*[a-z].*") && password.matches(".*[!@#$%^&*()-_+=<>?].*");
+    }
+
+    private boolean isValidEmail(String email) {
+        String emailPattern = "[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+";
+        return email.matches(emailPattern);
+    }
+
     public void redirectToLoginPage(View view) {
         Intent intent = new Intent(this, LoginActivity.class);
         startActivity(intent);
         finish(); // Optional: finish the current activity to prevent going back to it
+    }
+
+    private class SimpleTextWatcher implements TextWatcher {
+        private final EditText editText;
+        private final Consumer<String> validationCallback;
+
+        SimpleTextWatcher(EditText editText, Consumer<String> validationCallback) {
+            this.editText = editText;
+            this.validationCallback = validationCallback;
+        }
+
+        @Override
+        public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+        }
+
+        @Override
+        public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+        }
+
+        @Override
+        public void afterTextChanged(Editable editable) {
+            validationCallback.accept(editable.toString());
+        }
+    }
+
+    interface Consumer<T> {
+        void accept(T t);
     }
 }
