@@ -1,4 +1,4 @@
-//package com.example.basic;
+package com.example.basic;//package com.example.basic;
 //import org.junit.Test;
 //
 //import static org.junit.Assert.assertEquals;
@@ -64,3 +64,75 @@
 //    // - Make sure to handle UI updates and asynchronous tasks properly in your activity for accurate testing.
 //    // - These tests are simplified and may need modification based on the actual implementation details.
 //}
+import android.widget.EditText;
+
+import org.junit.Test;
+import org.mockito.Mockito;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.when;
+
+public class RegistrationActivityTest {
+
+    @Test
+    public void testIsStrongPassword() {
+        RegistrationActivity registrationActivity = new RegistrationActivity();
+
+        // Test with a weak password
+        assertFalse(registrationActivity.isStrongPassword("password"));
+
+        // Test with a strong password
+        assertTrue(registrationActivity.isStrongPassword("Password123!"));
+    }
+
+    @Test
+    public void testIsValidEmail() {
+        RegistrationActivity registrationActivity = new RegistrationActivity();
+
+        // Test with a valid email
+        assertTrue(registrationActivity.isValidEmail("test@example.com"));
+
+        // Test with an invalid email
+        assertFalse(registrationActivity.isValidEmail("invalid-email"));
+    }
+
+    @Test
+    public void testValidateName() {
+        RegistrationActivity registrationActivity = new RegistrationActivity();
+        EditText nameEditText = Mockito.mock(EditText.class);
+
+        // Test with an empty name
+        when(nameEditText.getText().toString()).thenReturn("");
+        registrationActivity.validateName(nameEditText.getText().toString());
+        assertTrue(nameEditText.getError() != null);
+
+        // Test with a non-empty name
+        when(nameEditText.getText().toString()).thenReturn("John Doe");
+        registrationActivity.validateName(nameEditText.getText().toString());
+        assertTrue(nameEditText.getError() == null);
+    }
+
+    @Test
+    public void testValidateEmail() {
+        RegistrationActivity registrationActivity = new RegistrationActivity();
+        EditText emailEditText = Mockito.mock(EditText.class);
+
+        // Test with an empty email
+        when(emailEditText.getText().toString()).thenReturn("");
+        registrationActivity.validateEmail(emailEditText.getText().toString());
+        assertTrue(emailEditText.getError() != null);
+
+        // Test with an invalid email
+        when(emailEditText.getText().toString()).thenReturn("invalid-email");
+        registrationActivity.validateEmail(emailEditText.getText().toString());
+        assertTrue(emailEditText.getError() != null);
+
+        // Test with a valid email
+        when(emailEditText.getText().toString()).thenReturn("test@example.com");
+        registrationActivity.validateEmail(emailEditText.getText().toString());
+        assertTrue(emailEditText.getError() == null);
+    }
+
+
+}

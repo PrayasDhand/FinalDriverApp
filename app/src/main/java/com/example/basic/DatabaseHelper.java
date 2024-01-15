@@ -13,10 +13,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "Drivers.db";
     private static final int DATABASE_VERSION = 2;
 
-    private static final String TABLE_NAME = "DriversList";
+    static final String TABLE_NAME = "DriversList";
     private static final String COLUMN_ID = "id";
-    private static final String COLUMN_FIRST_NAME = "firstname";
-    private static final String COLUMN_EMAIL = "email";
+    static final String COLUMN_FIRST_NAME = "firstname";
+    static final String COLUMN_EMAIL = "email";
     private static final String COLUMN_PASSWORD = "password";
     private static final String COLUMN_DOB = "dob";
     private static final String COLUMN_CONTACT = "contact";
@@ -86,4 +86,24 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return userExists;
     }
 
+    public boolean isDriverAlreadyRegistered(String licenseNo) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+
+        try {
+            String[] columns = {COLUMN_LICENSE_NUMBER};
+            String selection = COLUMN_LICENSE_NUMBER + " = ?";
+            String[] selectionArgs = {licenseNo};
+
+            cursor = db.query(TABLE_NAME, columns, selection, selectionArgs, null, null, null);
+
+            // Move to the first row in the result set
+            return cursor.moveToFirst();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+            db.close();
+        }
+    }
 }

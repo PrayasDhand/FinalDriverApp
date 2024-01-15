@@ -6,6 +6,8 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
@@ -26,6 +28,7 @@ import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.Task;
 
 public class LoginActivity extends AppCompatActivity {
+
     private GoogleSignInClient mGoogleSignInClient;
     private static final String TAG = "LoginActivity";
     private final int RC_SIGN_IN = 9002;
@@ -48,14 +51,19 @@ public class LoginActivity extends AppCompatActivity {
             redirectToRegisterDriver();
         }
 
-
         Button loginBtn = findViewById(R.id.loginBtn);
         TextView registerTextView = findViewById(R.id.textView6);
+        EditText emailEditText = findViewById(R.id.emailEditText);
+        EditText passwordEditText = findViewById(R.id.passwordEditText);
+
         registerTextView.setOnClickListener(v -> {
             // Redirect to RegisterActivity
             Intent intent = new Intent(LoginActivity.this, RegistrationActivity.class);
             startActivity(intent);
         });
+
+        emailEditText.addTextChangedListener(new SimpleTextWatcher(emailEditText, this::validateEmail));
+
         loginBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -63,29 +71,30 @@ public class LoginActivity extends AppCompatActivity {
             }
 
             private void authenticateSqlite() {
-
-                EditText emailEditText = findViewById(R.id.emailEditText);
-                EditText passwordEditText = findViewById(R.id.passwordEditText);
-
                 String email = emailEditText.getText().toString().trim();
                 String password = passwordEditText.getText().toString().trim();
 
-                if (authenticateUser(email,password)){
-
-                    saveLoginState();
-                    redirectToRegisterDriver();
-//                    Intent intent = new Intent(LoginActivity.this,DriverRegistration.class);
-//                    startActivity(intent);
-//                    finish();
-
-                }else {
-                    Toast.makeText(LoginActivity.this,"Invalid Credentials",Toast.LENGTH_SHORT).show();
+                // Validate email
+                if (email.isEmpty() || !isValidEmail(email)) {
+                    emailEditText.setError("Please enter a valid email address");
+                    return; // Stop authentication if email is invalid
                 }
 
+                // Continue with authentication
+                if (email.isEmpty() || password.isEmpty()) {
+                    Toast.makeText(LoginActivity.this, "Please fill in all fields", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                if (authenticateUser(email, password)) {
+                    saveLoginState();
+                    redirectToRegisterDriver();
+                } else {
+                    Toast.makeText(LoginActivity.this, "Invalid Credentials", Toast.LENGTH_SHORT).show();
+                }
             }
 
-             boolean authenticateUser(String email, String password) {
-
+            private boolean authenticateUser(String email, String password) {
                 SQLiteDatabase db = databaseHelper.getReadableDatabase();
 
                 String[] projection = {
@@ -116,7 +125,6 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
 
-
         // Configure sign-in to request the user's ID, email address, and basic profile
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestEmail()
@@ -133,6 +141,20 @@ public class LoginActivity extends AppCompatActivity {
         signInButton.setOnClickListener(view -> signIn());
     }
 
+    void validateEmail(String email) {
+        EditText emailEditText = findViewById(R.id.emailEditText);
+        if (email.isEmpty() || !isValidEmail(email)) {
+            emailEditText.setError("Please enter a valid email address");
+        } else {
+            emailEditText.setError(null);
+        }
+    }
+
+    private boolean isValidEmail(String email) {
+        String emailPattern = "[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+";
+        return email.matches(emailPattern);
+    }
+
     private void saveLoginState() {
         SharedPreferences sharedPreferences = getSharedPreferences("loginPrefs", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -144,6 +166,7 @@ public class LoginActivity extends AppCompatActivity {
         SharedPreferences sharedPreferences = getSharedPreferences("loginPrefs", Context.MODE_PRIVATE);
         return sharedPreferences.getBoolean("isLoggedIn", false);
     }
+
     private void redirectToRegisterDriver() {
         Intent intent = new Intent(LoginActivity.this, DriverRegistration.class);
         startActivity(intent);
@@ -172,5 +195,32 @@ public class LoginActivity extends AppCompatActivity {
                 // ...
             }
         }
+    }
+
+    private class SimpleTextWatcher implements TextWatcher {
+        private final EditText editText;
+        private final LoginActivity.Consumer<String> validationCallback;
+
+        SimpleTextWatcher(EditText editText, LoginActivity.Consumer<String> validationCallback) {
+            this.editText = editText;
+            this.validationCallback = validationCallback;
+        }
+
+        @Override
+        public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+        }
+
+        @Override
+        public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+        }
+
+        @Override
+        public void afterTextChanged(Editable editable) {
+            validationCallback.accept(editable.toString());
+        }
+    }
+
+    interface Consumer<T> {
+        void accept(T t);
     }
 }

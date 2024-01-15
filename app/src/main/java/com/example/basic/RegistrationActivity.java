@@ -60,16 +60,18 @@ public class RegistrationActivity extends AppCompatActivity {
         });
     }
 
-    private void validateName(String name) {
+    void validateName(String name) {
         EditText nameEditText = findViewById(R.id.edText1);
         if (name.isEmpty()) {
             nameEditText.setError("Please enter your name");
+        } else if (name.length() > 30) {
+            nameEditText.setError("Name should be at most 30 characters");
         } else {
             nameEditText.setError(null);
         }
     }
 
-    private void validateEmail(String email) {
+    void validateEmail(String email) {
         EditText emailEditText = findViewById(R.id.editText2);
         if (email.isEmpty() || !isValidEmail(email)) {
             emailEditText.setError("Please enter a valid email address");
@@ -193,11 +195,11 @@ public class RegistrationActivity extends AppCompatActivity {
         return isUserRegistered;
     }
 
-    private boolean isStrongPassword(String password) {
+    boolean isStrongPassword(String password) {
         return password.matches(".*[A-Z].*") && password.matches(".*[a-z].*") && password.matches(".*[!@#$%^&*()-_+=<>?].*");
     }
 
-    private boolean isValidEmail(String email) {
+    boolean isValidEmail(String email) {
         String emailPattern = "[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+";
         return email.matches(emailPattern);
     }

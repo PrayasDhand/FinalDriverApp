@@ -8,6 +8,8 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
@@ -86,6 +88,63 @@ public class DriverRegistration extends AppCompatActivity {
         chooseLicenseImageBtn.setOnClickListener(this::onChooseLicenseImageClick);
         databaseHelper = new DatabaseHelper(this);
         ocrHelper = new TesseractHelper(this, "eng");
+
+        fullNameEditText.addTextChangedListener(new SimpleTextWatcher(fullNameEditText, this::validateFullName));
+        emailEditText.addTextChangedListener(new SimpleTextWatcher(emailEditText, this::validateEmail));
+        passwordEditText.addTextChangedListener(new SimpleTextWatcher(passwordEditText, this::validatePassword));
+        vehicleEditText.addTextChangedListener(new SimpleTextWatcher(vehicleEditText, this::validateVehicle));
+
+        contactEditText.addTextChangedListener(new SimpleTextWatcher(contactEditText, this::validateContact));
+    }
+
+    private void validateFullName(String fullName) {
+        if (fullName.isEmpty()) {
+            fullNameEditText.setError("Please enter your full name");
+        } else if (fullName.length() > 30) {
+            fullNameEditText.setError("Full name should be at most 30 characters");
+        } else {
+            fullNameEditText.setError(null);
+        }
+    }
+
+    private void validateEmail(String email) {
+        if (email.isEmpty() || !isValidEmail(email)) {
+            emailEditText.setError("Please enter a valid email address");
+        } else {
+            emailEditText.setError(null);
+        }
+    }
+
+    boolean isValidEmail(String email) {
+        String emailPattern = "[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+";
+        return email.matches(emailPattern);
+    }
+
+    private void validatePassword(String password) {
+        if (password.isEmpty() || !isStrongPassword(password)) {
+            passwordEditText.setError("Password should contain one uppercase, one lowercase, and one special character");
+        } else {
+            passwordEditText.setError(null);
+        }
+    }
+
+    boolean isStrongPassword(String password) {
+        return password.matches(".*[A-Z].*") && password.matches(".*[a-z].*") && password.matches(".*[!@#$%^&*()-_+=<>?].*");
+    }
+
+    private void validateVehicle(String vehicle) {
+        if (vehicle.isEmpty()) {
+            vehicleEditText.setError("Please enter the vehicle type");
+        } else {
+            vehicleEditText.setError(null);
+        }
+    }
+    private void validateContact(String contact) {
+        if (contact.isEmpty() || contact.length() != 10) {
+            contactEditText.setError("Phone number should be of 10 digits");
+        } else {
+            contactEditText.setError(null);
+        }
     }
     private void showDatePickerDialog() {
         // Get the current date
@@ -101,8 +160,16 @@ public class DriverRegistration extends AppCompatActivity {
 
         // Create the DatePickerDialog
         DatePickerDialog datePickerDialog = new DatePickerDialog(this, (view, year, monthOfYear, dayOfMonth) -> {
-            String selectedDate = String.format(Locale.getDefault(), "%04d-%02d-%02d", year, monthOfYear + 1, dayOfMonth);
-            dobEditText.setText(selectedDate);
+            // Check if the selected date is 18 years ago or older
+            if (year < minBirthYear || (year == minBirthYear && monthOfYear < minBirthMonth) || (year == minBirthYear && monthOfYear == minBirthMonth && dayOfMonth < minBirthDay)) {
+                String selectedDate = String.format(Locale.getDefault(), "%04d-%02d-%02d", year, monthOfYear + 1, dayOfMonth);
+                dobEditText.setText(selectedDate);
+            } else {
+                // Show a toast or alert indicating that the selected date is not allowed
+                Toast.makeText(this, "You must be 18 years or older to register.", Toast.LENGTH_SHORT).show();
+                // Optionally, you can clear the selected date
+                dobEditText.setText("");
+            }
         }, minBirthYear, minBirthMonth, minBirthDay);
 
         // Set the maximum date to the current date
@@ -171,6 +238,12 @@ public class DriverRegistration extends AppCompatActivity {
             return;
         }
 
+        if (isDriverAlreadyRegistered(licenseNo)) {
+            // Display a toast indicating that the driver already exists
+            Toast.makeText(this, "Driver with this license number already exists", Toast.LENGTH_SHORT).show();
+            return; // Stop registration process
+        }
+
         String ocrResultFromImage = ocrHelper.getOCRResult();
 
         if (ocrResultFromImage != null && !ocrResultFromImage.isEmpty()) {
@@ -208,6 +281,11 @@ public class DriverRegistration extends AppCompatActivity {
             Toast.makeText(this, "Error: Unable to extract OCR result", Toast.LENGTH_SHORT).show();
         }
     }
+
+    private boolean isDriverAlreadyRegistered(String licenseNo) {
+        return databaseHelper.isDriverAlreadyRegistered(licenseNo);
+    }
+
     private boolean verifyDetailsWithOCR(String ocrResult, String licenseNo) {
         // Check if the license number is present in the OCR result
         return ocrResult.toLowerCase().contains(licenseNo.toLowerCase());
@@ -275,6 +353,33 @@ public class DriverRegistration extends AppCompatActivity {
             Log.e("OCR", "Exception: " + e.getMessage());
             Toast.makeText(this, "Error: OCR processing failed", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private class SimpleTextWatcher implements TextWatcher {
+        private final EditText editText;
+        private final Consumer<String> validationCallback;
+
+        SimpleTextWatcher(EditText editText, Consumer<String> validationCallback) {
+            this.editText = editText;
+            this.validationCallback = validationCallback;
+        }
+
+        @Override
+        public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+        }
+
+        @Override
+        public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+        }
+
+        @Override
+        public void afterTextChanged(Editable editable) {
+            validationCallback.accept(editable.toString());
+        }
+    }
+
+    interface Consumer<T> {
+        void accept(T t);
     }
 
 
