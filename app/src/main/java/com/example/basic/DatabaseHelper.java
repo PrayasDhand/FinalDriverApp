@@ -11,7 +11,7 @@ import androidx.annotation.Nullable;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "Drivers.db";
-    private static final int DATABASE_VERSION = 2;
+    private static final int DATABASE_VERSION = 3;
 
     static final String TABLE_NAME = "DriversList";
     private static final String COLUMN_ID = "id";
@@ -20,6 +20,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String COLUMN_PASSWORD = "password";
     private static final String COLUMN_DOB = "dob";
     private static final String COLUMN_CONTACT = "contact";
+    private static final String COLUMN_ADDRESS = "address";
     private static final String COLUMN_LICENSE_NUMBER = "licensenumber";
 
     private static final String COLUMN_VEHICLE_TYPE = "vehicletype";
@@ -37,6 +38,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 COLUMN_PASSWORD + " TEXT, " +
                 COLUMN_DOB + " TEXT, " +
                 COLUMN_CONTACT + " TEXT, " +
+                COLUMN_ADDRESS + " TEXT, " +
                 COLUMN_LICENSE_NUMBER + " TEXT, " +
                 COLUMN_VEHICLE_TYPE + " TEXT" +
                 ")";
@@ -54,7 +56,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         onCreate(db);
     }
 
-    public boolean insertUser(String fullName, String email, String password, String dob, String contact, String licenseNo, String vehicleType) {
+    public boolean insertUser(String fullName, String email, String password, String dob, String contact,String address, String licenseNo, String vehicleType) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
         contentValues.put(COLUMN_FIRST_NAME, fullName);
@@ -62,6 +64,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         contentValues.put(COLUMN_PASSWORD, password);
         contentValues.put(COLUMN_DOB, dob);
         contentValues.put(COLUMN_CONTACT, contact);
+        contentValues.put(COLUMN_ADDRESS,address);
         contentValues.put(COLUMN_LICENSE_NUMBER, licenseNo);
         contentValues.put(COLUMN_VEHICLE_TYPE, vehicleType);
 

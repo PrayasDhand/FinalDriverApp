@@ -27,6 +27,7 @@ import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.Task;
 
+
 public class LoginActivity extends AppCompatActivity {
 
     private GoogleSignInClient mGoogleSignInClient;
@@ -94,7 +95,7 @@ public class LoginActivity extends AppCompatActivity {
                 }
             }
 
-            private boolean authenticateUser(String email, String password) {
+            public boolean authenticateUser(String email, String password) {
                 SQLiteDatabase db = databaseHelper.getReadableDatabase();
 
                 String[] projection = {
@@ -150,19 +151,19 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
-    private boolean isValidEmail(String email) {
+    boolean isValidEmail(String email) {
         String emailPattern = "[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+";
         return email.matches(emailPattern);
     }
 
-    private void saveLoginState() {
+    void saveLoginState() {
         SharedPreferences sharedPreferences = getSharedPreferences("loginPrefs", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putBoolean("isLoggedIn", true);
         editor.apply();
     }
 
-    private boolean isLoggedIn() {
+    boolean isLoggedIn() {
         SharedPreferences sharedPreferences = getSharedPreferences("loginPrefs", Context.MODE_PRIVATE);
         return sharedPreferences.getBoolean("isLoggedIn", false);
     }
@@ -196,6 +197,9 @@ public class LoginActivity extends AppCompatActivity {
             }
         }
     }
+
+
+
 
     private class SimpleTextWatcher implements TextWatcher {
         private final EditText editText;

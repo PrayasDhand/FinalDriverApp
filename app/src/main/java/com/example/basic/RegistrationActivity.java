@@ -21,7 +21,7 @@ import com.google.firebase.database.FirebaseDatabase;
 
 public class RegistrationActivity extends AppCompatActivity {
 
-    private final DatabaseHelper1 dbHelper = new DatabaseHelper1(this);
+    DatabaseHelper1 dbHelper = new DatabaseHelper1(this);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,13 +62,20 @@ public class RegistrationActivity extends AppCompatActivity {
 
     void validateName(String name) {
         EditText nameEditText = findViewById(R.id.edText1);
+
         if (name.isEmpty()) {
             nameEditText.setError("Please enter your name");
+        } else if (!isValidName(name)) {
+            nameEditText.setError("You can't enter numbers or special characters (except ') in your name");
         } else if (name.length() > 30) {
             nameEditText.setError("Name should be at most 30 characters");
         } else {
             nameEditText.setError(null);
         }
+    }
+
+    boolean isValidName(String name) {
+        return name.matches("^[a-zA-Z']+");
     }
 
     void validateEmail(String email) {
@@ -82,14 +89,18 @@ public class RegistrationActivity extends AppCompatActivity {
 
     private void validatePassword(String password) {
         EditText passwordEditText = findViewById(R.id.editText3);
-        if (password.isEmpty() || !isStrongPassword(password)) {
-            passwordEditText.setError("Password should contain one uppercase, one lowercase, and one special character");
+        int minLength = 5;
+        int maxLength = 16;
+
+        if (password.isEmpty() || !isStrongPassword(password) || password.length() < minLength || password.length() > maxLength) {
+            passwordEditText.setError("Password should be between 5 and 16 characters and contain one uppercase, one lowercase, and one special character");
         } else {
             passwordEditText.setError(null);
         }
     }
 
-    private void validateContact(String contact) {
+
+    public void validateContact(String contact) {
         EditText contactEditText = findViewById(R.id.editText4);
         if (contact.isEmpty() || contact.length() != 10) {
             contactEditText.setError("Phone number should be of 10 digits");
@@ -168,7 +179,7 @@ public class RegistrationActivity extends AppCompatActivity {
         }
     }
 
-    private boolean isUserAlreadyRegistered(String email) {
+    boolean isUserAlreadyRegistered(String email) {
         SQLiteDatabase db = dbHelper.getReadableDatabase();
 
         String[] projection = {"id"};

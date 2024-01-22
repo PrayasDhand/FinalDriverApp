@@ -13,8 +13,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 public class TesseractHelper {
-    private TessBaseAPI tessBaseAPI;
-    private String ocrResult;
+    TessBaseAPI tessBaseAPI;
+    String ocrResult;
     private Context context;
     private String language;
 
@@ -24,7 +24,7 @@ public class TesseractHelper {
         initializeTesseract();
     }
 
-    private void initializeTesseract() {
+    void initializeTesseract() {
         tessBaseAPI = new TessBaseAPI();
         try {
             // Destination folder for tessdata in the app's internal storage

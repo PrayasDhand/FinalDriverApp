@@ -52,8 +52,10 @@ public class WelcomeDriver extends AppCompatActivity {
         String userEmail = getIntent().getStringExtra("email");
         String userPassword = getIntent().getStringExtra("password");
 
-        DatabaseHelper1 dbHelper = new DatabaseHelper1(this);
-        Driver user = dbHelper.getDriver(userEmail, userPassword);
+        Driver user;
+        try (DatabaseHelper1 dbHelper = new DatabaseHelper1(this)) {
+            user = dbHelper.getDriver(userEmail, userPassword);
+        }
 
         if (user != null) {
             welcomeUser.setText(user.getName());
@@ -75,7 +77,7 @@ public class WelcomeDriver extends AppCompatActivity {
 
     }
 
-    private void logout() {
+    void logout() {
 
         SharedPreferences preferences = getSharedPreferences("loginPrefs", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();

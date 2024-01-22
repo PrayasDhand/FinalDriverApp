@@ -14,10 +14,9 @@ import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.Button;
-import android.widget.DatePicker;
+
 import android.widget.EditText;
-import android.widget.ImageButton;
+
 import android.widget.ImageView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
@@ -28,31 +27,30 @@ import com.google.android.material.textfield.TextInputLayout;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.text.BreakIterator;
+
 import java.util.Calendar;
 import java.util.Locale;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
 public class DriverRegistration extends AppCompatActivity {
     private static final int PICK_DRIVER_IMAGE_REQUEST = 1;
     private static final int PICK_LICENSE_IMAGE_REQUEST = 2;
-    private ImageView imageView;
     private CircleImageView circularImageViewDriver;
     private ImageView licenseImageView;
     private TextInputEditText dobEditText;
-    private TextInputLayout datePickerLayout;
-    private EditText fullNameEditText;
-    private EditText emailEditText;
-    private EditText passwordEditText;
+    EditText fullNameEditText;
+    EditText emailEditText;
+    EditText passwordEditText;
 
-    private EditText vehicleEditText;
-    private DatabaseHelper databaseHelper;
-    private TesseractHelper ocrHelper;
-    private EditText contactEditText;
-    private EditText licenseNoEditText;
+    EditText vehicleEditText;
+    private EditText addressEditText;
+    DatabaseHelper databaseHelper;
+    TesseractHelper ocrHelper;
+    EditText contactEditText;
+    EditText licenseNoEditText;
+
 
 
     @Override
@@ -68,18 +66,19 @@ public class DriverRegistration extends AppCompatActivity {
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.register_driver);
 
-        imageView = findViewById(R.id.imageView);
+
         licenseImageView = findViewById(R.id.licenseImageView);
         fullNameEditText = findViewById(R.id.fname2);
         emailEditText = findViewById(R.id.email);
         passwordEditText = findViewById(R.id.password);
         dobEditText = findViewById(R.id.dobEditText);
-        datePickerLayout = findViewById(R.id.datePickerLayout);
+        TextInputLayout datePickerLayout = findViewById(R.id.datePickerLayout);
         dobEditText.setOnClickListener(v -> showDatePickerDialog());
 
         vehicleEditText = findViewById(R.id.vehicleType);
         licenseNoEditText = findViewById(R.id.licenseNo);
         contactEditText = findViewById(R.id.contact);
+        addressEditText = findViewById(R.id.address);
         circularImageViewDriver = findViewById(R.id.circularImageViewDriver);
         circularImageViewDriver.setOnClickListener(this::onChooseDriverImageClick);
 
@@ -97,17 +96,23 @@ public class DriverRegistration extends AppCompatActivity {
         contactEditText.addTextChangedListener(new SimpleTextWatcher(contactEditText, this::validateContact));
     }
 
-    private void validateFullName(String fullName) {
+    void validateFullName(String fullName) {
         if (fullName.isEmpty()) {
-            fullNameEditText.setError("Please enter your full name");
+            fullNameEditText.setError("Please enter your name");
+        } else if (!isValidName(fullName)) {
+            fullNameEditText.setError("You can't enter numbers or special characters (except ') in your name");
         } else if (fullName.length() > 30) {
-            fullNameEditText.setError("Full name should be at most 30 characters");
+            fullNameEditText.setError("Name should be at most 30 characters");
         } else {
             fullNameEditText.setError(null);
         }
     }
 
-    private void validateEmail(String email) {
+     boolean isValidName(String fullName) {
+         return fullName.matches("^[a-zA-Z']+");
+    }
+
+    void validateEmail(String email) {
         if (email.isEmpty() || !isValidEmail(email)) {
             emailEditText.setError("Please enter a valid email address");
         } else {
@@ -120,26 +125,31 @@ public class DriverRegistration extends AppCompatActivity {
         return email.matches(emailPattern);
     }
 
-    private void validatePassword(String password) {
-        if (password.isEmpty() || !isStrongPassword(password)) {
-            passwordEditText.setError("Password should contain one uppercase, one lowercase, and one special character");
+     void validatePassword(String password) {
+        EditText passwordEditText = findViewById(R.id.editText3);
+        int minLength = 5;
+        int maxLength = 16;
+
+        if (password.isEmpty() || !isStrongPassword(password) || password.length() < minLength || password.length() > maxLength) {
+            passwordEditText.setError("Password should be between 5 and 16 characters and contain one uppercase, one lowercase, and one special character");
         } else {
             passwordEditText.setError(null);
         }
     }
 
+
     boolean isStrongPassword(String password) {
         return password.matches(".*[A-Z].*") && password.matches(".*[a-z].*") && password.matches(".*[!@#$%^&*()-_+=<>?].*");
     }
 
-    private void validateVehicle(String vehicle) {
+    void validateVehicle(String vehicle) {
         if (vehicle.isEmpty()) {
             vehicleEditText.setError("Please enter the vehicle type");
         } else {
             vehicleEditText.setError(null);
         }
     }
-    private void validateContact(String contact) {
+    void validateContact(String contact) {
         if (contact.isEmpty() || contact.length() != 10) {
             contactEditText.setError("Phone number should be of 10 digits");
         } else {
@@ -181,27 +191,24 @@ public class DriverRegistration extends AppCompatActivity {
     private void onChooseDriverImageClick(View view) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Choose Image Source");
-        builder.setItems(new CharSequence[]{"Gallery", "Camera"}, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                switch (which) {
-                    case 0:
-                        // Choose from gallery
-                        Intent galleryIntent = new Intent(Intent.ACTION_PICK);
-                        galleryIntent.setType("image/*");
-                        startActivityForResult(galleryIntent, PICK_DRIVER_IMAGE_REQUEST);
-                        break;
+        builder.setItems(new CharSequence[]{"Gallery", "Camera"}, (dialog, which) -> {
+            switch (which) {
+                case 0:
+                    // Choose from gallery
+                    Intent galleryIntent = new Intent(Intent.ACTION_PICK);
+                    galleryIntent.setType("image/*");
+                    startActivityForResult(galleryIntent, PICK_DRIVER_IMAGE_REQUEST);
+                    break;
 
-                    case 1:
-                        // Open the camera
-                        Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                        if (cameraIntent.resolveActivity(getPackageManager()) != null) {
-                            startActivityForResult(cameraIntent, PICK_DRIVER_IMAGE_REQUEST);
-                        } else {
-                            Toast.makeText(DriverRegistration.this, "Camera not available", Toast.LENGTH_SHORT).show();
-                        }
-                        break;
-                }
+                case 1:
+                    // Open the camera
+                    Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                    if (cameraIntent.resolveActivity(getPackageManager()) != null) {
+                        startActivityForResult(cameraIntent, PICK_DRIVER_IMAGE_REQUEST);
+                    } else {
+                        Toast.makeText(DriverRegistration.this, "Camera not available", Toast.LENGTH_SHORT).show();
+                    }
+                    break;
             }
         });
         builder.show();
@@ -231,6 +238,7 @@ public class DriverRegistration extends AppCompatActivity {
         String licenseNo = licenseNoEditText.getText().toString();
         String vehicleType = vehicleEditText.getText().toString();
         String contact = contactEditText.getText().toString();
+        String address = addressEditText.getText().toString();
 
 
         if (licenseNo.isEmpty()) {
@@ -255,7 +263,7 @@ public class DriverRegistration extends AppCompatActivity {
 
                 if (detailsVerified) {
                     // Proceed with registration
-                    boolean success = databaseHelper.insertUser(fullName, email, password, dob, contact, licenseNo, vehicleType);
+                    boolean success = databaseHelper.insertUser(fullName, email, password, dob, contact,address, licenseNo, vehicleType);
 
                     if (success) {
                         Intent intent = new Intent(DriverRegistration.this,WelcomeDriver.class);
@@ -282,7 +290,7 @@ public class DriverRegistration extends AppCompatActivity {
         }
     }
 
-    private boolean isDriverAlreadyRegistered(String licenseNo) {
+    boolean isDriverAlreadyRegistered(String licenseNo) {
         return databaseHelper.isDriverAlreadyRegistered(licenseNo);
     }
 
