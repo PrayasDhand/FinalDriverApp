@@ -26,6 +26,11 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 
 public class LoginActivity extends AppCompatActivity {
@@ -63,68 +68,71 @@ public class LoginActivity extends AppCompatActivity {
                 startActivity(intent);
             });
 
+            loginBtn.setOnClickListener(v -> authenticateFirebase(emailEditText.getText().toString().trim(),
+                    passwordEditText.getText().toString().trim()));
+
             emailEditText.addTextChangedListener(new SimpleTextWatcher(emailEditText, this::validateEmail));
 
-            loginBtn.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    authenticateSqlite();
-                }
-
-                private void authenticateSqlite() {
-                    String email = emailEditText.getText().toString().trim();
-                    String password = passwordEditText.getText().toString().trim();
-
-                    // Validate email
-                    if (email.isEmpty() || !isValidEmail(email)) {
-                        emailEditText.setError("Please enter a valid email address");
-                        return; // Stop authentication if email is invalid
-                    }
-
-                    // Continue with authentication
-                    if (email.isEmpty() || password.isEmpty()) {
-                        Toast.makeText(LoginActivity.this, "Please fill in all fields", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-
-                    if (authenticateUser(email, password)) {
-                        saveLoginState();
-                        redirectToRegisterDriver();
-                    } else {
-                        Toast.makeText(LoginActivity.this, "Invalid Credentials", Toast.LENGTH_SHORT).show();
-                    }
-                }
-
-                public boolean authenticateUser(String email, String password) {
-                    SQLiteDatabase db = databaseHelper.getReadableDatabase();
-
-                    String[] projection = {
-                            "id",
-                            "email",
-                            "password"
-                    };
-
-                    String selection = "email = ? AND password = ?";
-                    String[] selectionArgs = {email, password};
-
-                    Cursor cursor = db.query(
-                            "Drivers",
-                            projection,
-                            selection,
-                            selectionArgs,
-                            null,
-                            null,
-                            null
-                    );
-
-                    boolean isAuthenticated = cursor.moveToFirst();
-
-                    // Close the cursor and database
-                    cursor.close();
-                    db.close();
-                    return isAuthenticated;
-                }
-            });
+//            loginBtn.setOnClickListener(new View.OnClickListener() {
+//                @Override
+//                public void onClick(View v) {
+//                    authenticateSqlite();
+//                }
+//
+//                private void authenticateSqlite() {
+//                    String email = emailEditText.getText().toString().trim();
+//                    String password = passwordEditText.getText().toString().trim();
+//
+//                    // Validate email
+//                    if (email.isEmpty() || !isValidEmail(email)) {
+//                        emailEditText.setError("Please enter a valid email address");
+//                        return; // Stop authentication if email is invalid
+//                    }
+//
+//                    // Continue with authentication
+//                    if (email.isEmpty() || password.isEmpty()) {
+//                        Toast.makeText(LoginActivity.this, "Please fill in all fields", Toast.LENGTH_SHORT).show();
+//                        return;
+//                    }
+//
+//                    if (authenticateUser(email, password)) {
+//                        saveLoginState();
+//                        redirectToRegisterDriver();
+//                    } else {
+//                        Toast.makeText(LoginActivity.this, "Invalid Credentials", Toast.LENGTH_SHORT).show();
+//                    }
+//                }
+//
+//                public boolean authenticateUser(String email, String password) {
+//                    SQLiteDatabase db = databaseHelper.getReadableDatabase();
+//
+//                    String[] projection = {
+//                            "id",
+//                            "email",
+//                            "password"
+//                    };
+//
+//                    String selection = "email = ? AND password = ?";
+//                    String[] selectionArgs = {email, password};
+//
+//                    Cursor cursor = db.query(
+//                            "Drivers",
+//                            projection,
+//                            selection,
+//                            selectionArgs,
+//                            null,
+//                            null,
+//                            null
+//                    );
+//
+//                    boolean isAuthenticated = cursor.moveToFirst();
+//
+//                    // Close the cursor and database
+//                    cursor.close();
+//                    db.close();
+//                    return isAuthenticated;
+//                }
+//            });
         }
 
         // Configure sign-in to request the user's ID, email address, and basic profile
@@ -142,6 +150,58 @@ public class LoginActivity extends AppCompatActivity {
         // Set click listener for the sign-in button
         signInButton.setOnClickListener(view -> signIn());
     }
+
+    private void authenticateFirebase(String email, String password) {
+        DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference().child("drivers");
+
+        databaseReference.orderByChild("email").equalTo(email).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                        String storedPassword = snapshot.child("password").getValue(String.class);
+
+                        if (storedPassword != null && storedPassword.trim().equals(password)) {
+                            String fullName = snapshot.child("name").getValue(String.class);
+                            String email = snapshot.child("email").getValue(String.class);
+                            String password = snapshot.child("password").getValue(String.class);
+                            String contact = snapshot.child("contact").getValue(String.class);
+
+                            saveUserDataToSharedPreferences(fullName, email, password, contact);
+
+                            saveLoginState();
+                            redirectToRegisterDriver();
+                            return; // Exit the loop if authentication is successful
+                        } else {
+                            Log.d(TAG, "Stored Password: " + storedPassword);
+                            Log.d(TAG, "Entered Password: " + password);
+                            Toast.makeText(LoginActivity.this, "Invalid Password", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                } else {
+                    Log.d(TAG, "User not found for email: " + email);
+                    Toast.makeText(LoginActivity.this, "User not found", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.e(TAG, "Database Error: " + databaseError.getMessage());
+                Toast.makeText(LoginActivity.this, "Database Error", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void saveUserDataToSharedPreferences(String fullName, String email, String password, String contact) {
+        SharedPreferences sharedPreferences = getSharedPreferences("userPrefs", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString("fullName", fullName);
+        editor.putString("email", email);
+        editor.putString("password", password);
+        editor.putString("contact", contact);
+        editor.apply();
+    }
+
 
     void validateEmail(String email) {
         EditText emailEditText = findViewById(R.id.emailEditText);
