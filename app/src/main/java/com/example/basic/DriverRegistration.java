@@ -24,6 +24,8 @@ import androidx.appcompat.widget.AppCompatButton;
 
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -51,6 +53,7 @@ public class DriverRegistration extends AppCompatActivity {
     EditText contactEditText;
     EditText licenseNoEditText;
 
+    private DatabaseReference driversDatabaseReference = FirebaseDatabase.getInstance().getReference().child("DriversDatabase");
 
 
     @Override
@@ -86,13 +89,15 @@ public class DriverRegistration extends AppCompatActivity {
         AppCompatButton chooseLicenseImageBtn = findViewById(R.id.chooseLicenseImageBtn);
         chooseLicenseImageBtn.setOnClickListener(this::onChooseLicenseImageClick);
         databaseHelper = new DatabaseHelper(this);
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        driversDatabaseReference = database.getReference("DriversDatabase");
         ocrHelper = new TesseractHelper(this, "eng");
 
         fullNameEditText.addTextChangedListener(new SimpleTextWatcher(fullNameEditText, this::validateFullName));
         emailEditText.addTextChangedListener(new SimpleTextWatcher(emailEditText, this::validateEmail));
         passwordEditText.addTextChangedListener(new SimpleTextWatcher(passwordEditText, this::validatePassword));
         vehicleEditText.addTextChangedListener(new SimpleTextWatcher(vehicleEditText, this::validateVehicle));
-
+        licenseNoEditText.addTextChangedListener(new SimpleTextWatcher(licenseNoEditText,this::validateLicenseNumber));
         contactEditText.addTextChangedListener(new SimpleTextWatcher(contactEditText, this::validateContact));
     }
 
@@ -109,7 +114,7 @@ public class DriverRegistration extends AppCompatActivity {
     }
 
      boolean isValidName(String fullName) {
-         return fullName.matches("^[a-zA-Z']+");
+         return fullName.matches("^[a-zA-Z' ]+");
     }
 
     void validateEmail(String email) {
@@ -121,12 +126,11 @@ public class DriverRegistration extends AppCompatActivity {
     }
 
     boolean isValidEmail(String email) {
-        String emailPattern = "[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+";
+        String emailPattern = "^[a-z][a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+$";
         return email.matches(emailPattern);
     }
 
-     void validatePassword(String password) {
-        EditText passwordEditText = findViewById(R.id.editText3);
+    void validatePassword(String password) {
         int minLength = 5;
         int maxLength = 16;
 
@@ -143,18 +147,42 @@ public class DriverRegistration extends AppCompatActivity {
     }
 
     void validateVehicle(String vehicle) {
-        if (vehicle.isEmpty()) {
-            vehicleEditText.setError("Please enter the vehicle type");
+        if (vehicle.isEmpty() || !isValidVehicle(vehicle)) {
+            vehicleEditText.setError("Please enter a valid vehicle type with only alphabets");
         } else {
             vehicleEditText.setError(null);
         }
     }
+
+    boolean isValidVehicle(String vehicle) {
+        // Allowing only alphabets
+        return vehicle.matches("^[a-zA-Z]+$");
+    }
     void validateContact(String contact) {
-        if (contact.isEmpty() || contact.length() != 10) {
-            contactEditText.setError("Phone number should be of 10 digits");
+        if (contact.isEmpty() || !isValidContact(contact)) {
+            contactEditText.setError("Please enter a valid contact number with country code (e.g., +911234567890)");
         } else {
             contactEditText.setError(null);
         }
+    }
+
+    boolean isValidContact(String contact) {
+        // Allowing optional '+' followed by 1 to 15 digits
+        return contact.matches("^\\+?\\d{1,12}$");
+    }
+
+
+    void validateLicenseNumber(String licenseNo) {
+        if (licenseNo.isEmpty() || !isValidLicenseNumber(licenseNo)) {
+            licenseNoEditText.setError("Please enter a valid license number without special characters");
+        } else {
+            licenseNoEditText.setError(null);
+        }
+    }
+
+    boolean isValidLicenseNumber(String licenseNo) {
+        // Allowing only alphanumeric characters
+        return licenseNo.matches("^[a-zA-Z0-9]+$");
     }
     private void showDatePickerDialog() {
         // Get the current date
@@ -266,6 +294,7 @@ public class DriverRegistration extends AppCompatActivity {
                     boolean success = databaseHelper.insertUser(fullName, email, password, dob, contact,address, licenseNo, vehicleType);
 
                     if (success) {
+                        saveDriverDataInFirebase(fullName, email, dob, contact, address, licenseNo, vehicleType);
                         Intent intent = new Intent(DriverRegistration.this,WelcomeDriver.class);
                         startActivity(intent);
                         finish();
@@ -288,6 +317,13 @@ public class DriverRegistration extends AppCompatActivity {
 
             Toast.makeText(this, "Error: Unable to extract OCR result", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private void saveDriverDataInFirebase(String fullName, String email, String dob, String contact, String address, String licenseNo, String vehicleType) {
+        DriversData driver = new DriversData(0, fullName, email, dob, contact, address, licenseNo, vehicleType);
+        String firebaseKey = driversDatabaseReference.push().getKey();
+        DatabaseReference driverRef = driversDatabaseReference.child(firebaseKey);
+        driverRef.setValue(driver);
     }
 
     boolean isDriverAlreadyRegistered(String licenseNo) {

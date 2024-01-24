@@ -46,85 +46,86 @@ public class LoginActivity extends AppCompatActivity {
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.login_page);
 
-        DatabaseHelper1 databaseHelper = new DatabaseHelper1(this);
+        try (DatabaseHelper1 databaseHelper = new DatabaseHelper1(this)) {
 
-        if (isLoggedIn()) {
-            redirectToRegisterDriver();
+            if (isLoggedIn()) {
+                redirectToRegisterDriver();
+            }
+
+            Button loginBtn = findViewById(R.id.loginBtn);
+            TextView registerTextView = findViewById(R.id.textView6);
+            EditText emailEditText = findViewById(R.id.emailEditText);
+            EditText passwordEditText = findViewById(R.id.passwordEditText);
+
+            registerTextView.setOnClickListener(v -> {
+                // Redirect to RegisterActivity
+                Intent intent = new Intent(LoginActivity.this, RegistrationActivity.class);
+                startActivity(intent);
+            });
+
+            emailEditText.addTextChangedListener(new SimpleTextWatcher(emailEditText, this::validateEmail));
+
+            loginBtn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    authenticateSqlite();
+                }
+
+                private void authenticateSqlite() {
+                    String email = emailEditText.getText().toString().trim();
+                    String password = passwordEditText.getText().toString().trim();
+
+                    // Validate email
+                    if (email.isEmpty() || !isValidEmail(email)) {
+                        emailEditText.setError("Please enter a valid email address");
+                        return; // Stop authentication if email is invalid
+                    }
+
+                    // Continue with authentication
+                    if (email.isEmpty() || password.isEmpty()) {
+                        Toast.makeText(LoginActivity.this, "Please fill in all fields", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    if (authenticateUser(email, password)) {
+                        saveLoginState();
+                        redirectToRegisterDriver();
+                    } else {
+                        Toast.makeText(LoginActivity.this, "Invalid Credentials", Toast.LENGTH_SHORT).show();
+                    }
+                }
+
+                public boolean authenticateUser(String email, String password) {
+                    SQLiteDatabase db = databaseHelper.getReadableDatabase();
+
+                    String[] projection = {
+                            "id",
+                            "email",
+                            "password"
+                    };
+
+                    String selection = "email = ? AND password = ?";
+                    String[] selectionArgs = {email, password};
+
+                    Cursor cursor = db.query(
+                            "Drivers",
+                            projection,
+                            selection,
+                            selectionArgs,
+                            null,
+                            null,
+                            null
+                    );
+
+                    boolean isAuthenticated = cursor.moveToFirst();
+
+                    // Close the cursor and database
+                    cursor.close();
+                    db.close();
+                    return isAuthenticated;
+                }
+            });
         }
-
-        Button loginBtn = findViewById(R.id.loginBtn);
-        TextView registerTextView = findViewById(R.id.textView6);
-        EditText emailEditText = findViewById(R.id.emailEditText);
-        EditText passwordEditText = findViewById(R.id.passwordEditText);
-
-        registerTextView.setOnClickListener(v -> {
-            // Redirect to RegisterActivity
-            Intent intent = new Intent(LoginActivity.this, RegistrationActivity.class);
-            startActivity(intent);
-        });
-
-        emailEditText.addTextChangedListener(new SimpleTextWatcher(emailEditText, this::validateEmail));
-
-        loginBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                authenticateSqlite();
-            }
-
-            private void authenticateSqlite() {
-                String email = emailEditText.getText().toString().trim();
-                String password = passwordEditText.getText().toString().trim();
-
-                // Validate email
-                if (email.isEmpty() || !isValidEmail(email)) {
-                    emailEditText.setError("Please enter a valid email address");
-                    return; // Stop authentication if email is invalid
-                }
-
-                // Continue with authentication
-                if (email.isEmpty() || password.isEmpty()) {
-                    Toast.makeText(LoginActivity.this, "Please fill in all fields", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                if (authenticateUser(email, password)) {
-                    saveLoginState();
-                    redirectToRegisterDriver();
-                } else {
-                    Toast.makeText(LoginActivity.this, "Invalid Credentials", Toast.LENGTH_SHORT).show();
-                }
-            }
-
-            public boolean authenticateUser(String email, String password) {
-                SQLiteDatabase db = databaseHelper.getReadableDatabase();
-
-                String[] projection = {
-                        "id",
-                        "email",
-                        "password"
-                };
-
-                String selection = "email = ? AND password = ?";
-                String[] selectionArgs = {email, password};
-
-                Cursor cursor = db.query(
-                        "Drivers",
-                        projection,
-                        selection,
-                        selectionArgs,
-                        null,
-                        null,
-                        null
-                );
-
-                boolean isAuthenticated = cursor.moveToFirst();
-
-                // Close the cursor and database
-                cursor.close();
-                db.close();
-                return isAuthenticated;
-            }
-        });
 
         // Configure sign-in to request the user's ID, email address, and basic profile
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -216,6 +217,7 @@ public class LoginActivity extends AppCompatActivity {
 
         @Override
         public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+            // TODO document why this method is empty
         }
 
         @Override

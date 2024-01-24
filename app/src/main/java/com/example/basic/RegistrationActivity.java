@@ -75,7 +75,7 @@ public class RegistrationActivity extends AppCompatActivity {
     }
 
     boolean isValidName(String name) {
-        return name.matches("^[a-zA-Z']+");
+        return name.matches("^[a-zA-Z' ]+");
     }
 
     void validateEmail(String email) {
@@ -102,11 +102,15 @@ public class RegistrationActivity extends AppCompatActivity {
 
     public void validateContact(String contact) {
         EditText contactEditText = findViewById(R.id.editText4);
-        if (contact.isEmpty() || contact.length() != 10) {
-            contactEditText.setError("Phone number should be of 10 digits");
+        if (contact.isEmpty() || !isValidContact(contact)) {
+            contactEditText.setError("Please enter a valid contact number with country code (e.g., +911234567890)");
         } else {
             contactEditText.setError(null);
         }
+    }
+    boolean isValidContact(String contact) {
+        // Allowing optional '+' followed by 1 to 15 digits
+        return contact.matches("^\\+?\\d{1,12}$");
     }
 
     void handleRegistration() {
