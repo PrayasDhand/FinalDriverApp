@@ -86,7 +86,7 @@ public class WelcomeDriver extends AppCompatActivity {
     }
 
     // Method to update details in Firebase and SharedPreferences
-    private void updateDetailsInFirebase() {
+    void updateDetailsInFirebase() {
         // Retrieve updated details from TextInputEditText
         String updatedFullName = fullNameEditText.getText().toString();
         String updatedEmail = emailEditText.getText().toString();
@@ -119,6 +119,13 @@ public class WelcomeDriver extends AppCompatActivity {
                             editor.putString("password", updatedPassword);
                             editor.putString("contact", updatedContact);
                             editor.apply();
+
+
+                            welcomeUser.setText(updatedFullName);
+                            fullNameEditText.setText(updatedFullName);
+                            emailEditText.setText(updatedEmail);
+                            passwordEditText.setText(updatedPassword);
+                            contactEditText.setText(updatedContact);
 
                             // Display a message or perform any other action to indicate the successful update
                             Toast.makeText(WelcomeDriver.this, "Details updated successfully", Toast.LENGTH_SHORT).show();

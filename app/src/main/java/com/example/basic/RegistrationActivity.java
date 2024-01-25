@@ -215,7 +215,7 @@ public class RegistrationActivity extends AppCompatActivity {
     }
 
     boolean isValidEmail(String email) {
-        String emailPattern = "[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+";
+        String emailPattern = "^[a-z][a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+$";
         return email.matches(emailPattern);
     }
 

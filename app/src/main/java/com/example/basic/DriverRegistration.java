@@ -171,18 +171,17 @@ public class DriverRegistration extends AppCompatActivity {
         return contact.matches("^\\+?\\d{1,12}$");
     }
 
-
     void validateLicenseNumber(String licenseNo) {
         if (licenseNo.isEmpty() || !isValidLicenseNumber(licenseNo)) {
-            licenseNoEditText.setError("Please enter a valid license number without special characters");
+            licenseNoEditText.setError("Please enter a valid license number.");
         } else {
             licenseNoEditText.setError(null);
         }
     }
 
     boolean isValidLicenseNumber(String licenseNo) {
-        // Allowing only alphanumeric characters
-        return licenseNo.matches("^[a-zA-Z0-9]+$");
+        // Allowing only alphabets, numbers, and hyphens
+        return licenseNo.matches("^[a-zA-Z0-9-]+$");
     }
     private void showDatePickerDialog() {
         // Get the current date
@@ -269,8 +268,9 @@ public class DriverRegistration extends AppCompatActivity {
         String address = addressEditText.getText().toString();
 
 
-        if (licenseNo.isEmpty()) {
-            Toast.makeText(this, "Please enter the license number", Toast.LENGTH_SHORT).show();
+        if (fullName.isEmpty() || email.isEmpty() || password.isEmpty() || dob.isEmpty() ||
+                licenseNo.isEmpty() || vehicleType.isEmpty() || contact.isEmpty() || address.isEmpty()) {
+            Toast.makeText(this, "Please add all the details", Toast.LENGTH_SHORT).show();
             return;
         }
 

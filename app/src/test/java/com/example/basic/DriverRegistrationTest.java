@@ -38,6 +38,9 @@ public class DriverRegistrationTest {
     private EditText mockContactEditText;
 
     @Mock
+    private EditText mockLicenseNoEditText;
+
+    @Mock
     private Context mockContext;
     private DriverRegistration driverRegistration;
 
@@ -52,6 +55,7 @@ public class DriverRegistrationTest {
         mockPasswordEditText = mock(EditText.class);
         mockVehicleEditText = mock(EditText.class);
         mockContactEditText = mock(EditText.class);
+        mockLicenseNoEditText = mock(EditText.class);
 
         driverRegistration.fullNameEditText = mockFullNameEditText;
         driverRegistration.emailEditText = mockEmailEditText;
@@ -82,7 +86,7 @@ public class DriverRegistrationTest {
         boolean result = driverRegistration.isDriverAlreadyRegistered(licenseNo);
 
         verify(mockDatabaseHelper).isDriverAlreadyRegistered(licenseNo);
-        assert (!result);
+        assertFalse(result);
     }
 
     @Test
@@ -93,8 +97,9 @@ public class DriverRegistrationTest {
         boolean result = driverRegistration.isDriverAlreadyRegistered(licenseNo);
 
         verify(mockDatabaseHelper).isDriverAlreadyRegistered(licenseNo);
-        assert (result);
+        assertTrue(result);
     }
+
 
     @Test
     public void isValidEmail_invalidEmail() {
@@ -126,7 +131,11 @@ public class DriverRegistrationTest {
     public void onRegisterClick_existingDriver() {
         // Mock a scenario where the driver with the license number already exists
         driverRegistration.licenseNoEditText.setText("existingLicense");
+        when(mockDatabaseHelper.isDriverAlreadyRegistered("existingLicense")).thenReturn(true);
+
         // Call onRegisterClick and assert the expected behavior
+        driverRegistration.onRegisterClick(null);
+        // Assert that an appropriate error message is displayed or handle the behavior as needed
     }
 
 
@@ -224,6 +233,57 @@ public class DriverRegistrationTest {
         driverRegistration.contactEditText.setText("1234567890");
         driverRegistration.validateContact(driverRegistration.contactEditText.getText().toString());
         assertNull(driverRegistration.contactEditText.getError()); // Assert that no error message is displayed for a valid contact
+    }
+
+
+
+    @Test
+    public void testValidateFullName_TooLongName() {
+        when(mockFullNameEditText.getText().toString()).thenReturn("John Doe John Doe John Doe John Doe John Doe");
+        driverRegistration.validateFullName(mockFullNameEditText.getText().toString());
+        verify(mockFullNameEditText).setError("Name should be at most 30 characters");
+    }
+
+    @Test
+    public void testValidateEmail_InvalidEmail() {
+        when(mockEmailEditText.getText().toString()).thenReturn("invalidemail");
+        driverRegistration.validateEmail(mockEmailEditText.getText().toString());
+        verify(mockEmailEditText).setError("Please enter a valid email address");
+    }
+
+    @Test
+    public void testValidatePassword_WeakPassword() {
+        when(mockPasswordEditText.getText().toString()).thenReturn("weakpassword");
+        driverRegistration.validatePassword(mockPasswordEditText.getText().toString());
+        verify(mockPasswordEditText).setError("Password should be between 5 and 16 characters and contain one uppercase, one lowercase, and one special character");
+    }
+
+    @Test
+    public void testValidateVehicle_InvalidVehicle() {
+        when(mockVehicleEditText.getText().toString()).thenReturn("Car123");
+        driverRegistration.validateVehicle(mockVehicleEditText.getText().toString());
+        verify(mockVehicleEditText).setError("Please enter a valid vehicle type with only alphabets");
+    }
+
+    @Test
+    public void testValidateContact_InvalidContact() {
+        when(mockContactEditText.getText().toString()).thenReturn("123");
+        driverRegistration.validateContact(mockContactEditText.getText().toString());
+        verify(mockContactEditText).setError("Please enter a valid contact number with country code (e.g., +911234567890)");
+    }
+
+    @Test
+    public void testValidateLicenseNumber_InvalidLicenseNumber() {
+        when(mockLicenseNoEditText.getText().toString()).thenReturn("License@123");
+        driverRegistration.validateLicenseNumber(mockLicenseNoEditText.getText().toString());
+        verify(mockLicenseNoEditText).setError("Please enter a valid license number without special characters");
+    }
+
+    @Test
+    public void testValidateLicenseNumber_ValidLicenseNumber() {
+        when(mockLicenseNoEditText.getText().toString()).thenReturn("ABCD1234");
+        driverRegistration.validateLicenseNumber(mockLicenseNoEditText.getText().toString());
+        assertNull(mockLicenseNoEditText.getError());
     }
 
     @Test
