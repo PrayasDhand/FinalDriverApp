@@ -2,8 +2,7 @@ plugins {
     id 'com.android.application'
     id 'com.google.gms.google-services'
     id "org.sonarqube" version "4.4.1.3373"
-
-
+    id 'jacoco'
 }
 
 android {
@@ -21,17 +20,34 @@ android {
     }
 
     buildTypes {
-
-
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            testCoverageEnabled = true  // Enable test coverage for release build
+        }
+        debug {
+            testCoverageEnabled = true
         }
     }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+
+    testOptions {
+        unitTests {
+            all {
+                jacoco {
+                    // Enable Jacoco coverage for unit tests
+                    includeNoLocationClasses = true
+                }
+            }
+        }
+    }
+
+
+
     sonarqube {
         properties {
             property "sonar.host.url", "http://localhost:9000" // Update with your SonarQube server URL
@@ -42,11 +58,16 @@ android {
             // Add more properties as needed
         }
     }
+    testOptions {
+        unitTests.returnDefaultValues = true
+    }
+}
+jacoco {
+    toolVersion = "0.8.7"
 }
 
 dependencies {
     implementation 'de.hdodenhof:circleimageview:3.1.0'
-
     implementation 'com.rmtheis:tess-two:9.1.0'
     implementation 'com.google.android.gms:play-services-auth:20.7.0'
     implementation 'androidx.appcompat:appcompat:1.2.0'
@@ -61,7 +82,6 @@ dependencies {
     testImplementation 'org.mockito:mockito-core:3.12.4'
     testImplementation 'org.robolectric:robolectric:4.11.1'
     testImplementation 'androidx.test:core:1.5.0'
-
 
     // Espresso for UI testing
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'

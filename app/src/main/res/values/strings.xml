@@ -1,3 +1,17 @@
 <resources>
     <string name="app_name">Basic</string>
+
+    <string-array name="vehicle_types_array">
+        <item>Car</item>
+        <item>Motorcycle</item>
+        <item>Truck</item>
+        <item>Van</item>
+        <item>LMV</item>
+        <item>MVCG</item>
+
+
+    </string-array>
 </resources>
+
+
+

@@ -3,41 +3,34 @@ package com.example.basic;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.text.Editable;
+import android.text.InputType;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.google.android.gms.auth.api.signin.GoogleSignIn;
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
-import com.google.android.gms.auth.api.signin.GoogleSignInClient;
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
-import com.google.android.gms.common.SignInButton;
-import com.google.android.gms.common.api.ApiException;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
-
 public class LoginActivity extends AppCompatActivity {
 
-    private GoogleSignInClient mGoogleSignInClient;
     private static final String TAG = "LoginActivity";
-    private final int RC_SIGN_IN = 9002;
+    private EditText passwordEditText;
+    private CheckBox showPasswordCheckBox;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,7 +53,12 @@ public class LoginActivity extends AppCompatActivity {
             Button loginBtn = findViewById(R.id.loginBtn);
             TextView registerTextView = findViewById(R.id.textView6);
             EditText emailEditText = findViewById(R.id.emailEditText);
-            EditText passwordEditText = findViewById(R.id.passwordEditText);
+            passwordEditText = findViewById(R.id.passwordEditText);
+            showPasswordCheckBox = findViewById(R.id.showPasswordCheckBox);
+            showPasswordCheckBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                // Toggle password visibility based on CheckBox state
+                togglePasswordVisibility(isChecked);
+            });
 
             registerTextView.setOnClickListener(v -> {
                 // Redirect to RegisterActivity
@@ -72,83 +70,20 @@ public class LoginActivity extends AppCompatActivity {
                     passwordEditText.getText().toString().trim()));
 
             emailEditText.addTextChangedListener(new SimpleTextWatcher(emailEditText, this::validateEmail));
+        }
+    }
 
-//            loginBtn.setOnClickListener(new View.OnClickListener() {
-//                @Override
-//                public void onClick(View v) {
-//                    authenticateSqlite();
-//                }
-//
-//                private void authenticateSqlite() {
-//                    String email = emailEditText.getText().toString().trim();
-//                    String password = passwordEditText.getText().toString().trim();
-//
-//                    // Validate email
-//                    if (email.isEmpty() || !isValidEmail(email)) {
-//                        emailEditText.setError("Please enter a valid email address");
-//                        return; // Stop authentication if email is invalid
-//                    }
-//
-//                    // Continue with authentication
-//                    if (email.isEmpty() || password.isEmpty()) {
-//                        Toast.makeText(LoginActivity.this, "Please fill in all fields", Toast.LENGTH_SHORT).show();
-//                        return;
-//                    }
-//
-//                    if (authenticateUser(email, password)) {
-//                        saveLoginState();
-//                        redirectToRegisterDriver();
-//                    } else {
-//                        Toast.makeText(LoginActivity.this, "Invalid Credentials", Toast.LENGTH_SHORT).show();
-//                    }
-//                }
-//
-//                public boolean authenticateUser(String email, String password) {
-//                    SQLiteDatabase db = databaseHelper.getReadableDatabase();
-//
-//                    String[] projection = {
-//                            "id",
-//                            "email",
-//                            "password"
-//                    };
-//
-//                    String selection = "email = ? AND password = ?";
-//                    String[] selectionArgs = {email, password};
-//
-//                    Cursor cursor = db.query(
-//                            "Drivers",
-//                            projection,
-//                            selection,
-//                            selectionArgs,
-//                            null,
-//                            null,
-//                            null
-//                    );
-//
-//                    boolean isAuthenticated = cursor.moveToFirst();
-//
-//                    // Close the cursor and database
-//                    cursor.close();
-//                    db.close();
-//                    return isAuthenticated;
-//                }
-//            });
+    private void togglePasswordVisibility(boolean showPassword) {
+        if (showPassword) {
+            // Show Password
+            passwordEditText.setInputType(InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
+        } else {
+            // Hide Password
+            passwordEditText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
         }
 
-        // Configure sign-in to request the user's ID, email address, and basic profile
-        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestEmail()
-                .build();
-
-        // Build a GoogleSignInClient with the options specified by gso
-        mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
-
-        // Set the dimensions of the sign-in button
-        SignInButton signInButton = findViewById(R.id.sign_in_button);
-        signInButton.setSize(SignInButton.SIZE_STANDARD);
-
-        // Set click listener for the sign-in button
-        signInButton.setOnClickListener(view -> signIn());
+        // Move cursor to the end of the text
+        passwordEditText.setSelection(passwordEditText.length());
     }
 
     private void authenticateFirebase(String email, String password) {
@@ -164,7 +99,6 @@ public class LoginActivity extends AppCompatActivity {
                         if (storedPassword != null && storedPassword.trim().equals(password)) {
                             String fullName = snapshot.child("name").getValue(String.class);
                             String email = snapshot.child("email").getValue(String.class);
-                            String password = snapshot.child("password").getValue(String.class);
                             String contact = snapshot.child("contact").getValue(String.class);
 
                             saveUserDataToSharedPreferences(fullName, email, password, contact);
@@ -202,7 +136,6 @@ public class LoginActivity extends AppCompatActivity {
         editor.apply();
     }
 
-
     void validateEmail(String email) {
         EditText emailEditText = findViewById(R.id.emailEditText);
         if (email.isEmpty() || !isValidEmail(email)) {
@@ -235,38 +168,11 @@ public class LoginActivity extends AppCompatActivity {
         finish();
     }
 
-    private void signIn() {
-        Intent signInIntent = mGoogleSignInClient.getSignInIntent();
-        startActivityForResult(signInIntent, RC_SIGN_IN);
-    }
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        // Result returned from launching the Intent from GoogleSignInClient.getSignInIntent(...);
-        if (requestCode == RC_SIGN_IN) {
-            Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
-            try {
-                // Google Sign In was successful, authenticate with Firebase
-                GoogleSignInAccount account = task.getResult(ApiException.class);
-
-            } catch (ApiException e) {
-                // Google Sign In failed, update UI appropriately
-                Log.w(TAG, "Google sign in failed", e);
-                // ...
-            }
-        }
-    }
-
-
-
-
     private class SimpleTextWatcher implements TextWatcher {
         private final EditText editText;
-        private final LoginActivity.Consumer<String> validationCallback;
+        private final Consumer<String> validationCallback;
 
-        SimpleTextWatcher(EditText editText, LoginActivity.Consumer<String> validationCallback) {
+        SimpleTextWatcher(EditText editText, Consumer<String> validationCallback) {
             this.editText = editText;
             this.validationCallback = validationCallback;
         }

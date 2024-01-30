@@ -121,19 +121,39 @@
                 android:textSize="25sp"
                 android:textStyle="bold" />
 
-            <EditText
-                android:id="@+id/password"
+            <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
-                android:background="@drawable/edit_text_background"
-                android:ems="10"
-                android:hint="Type your password"
-                android:inputType="textPassword"
-                android:padding="12dp"
-                android:textColorHint="#707070"
-                android:textSize="18sp"
-                android:textStyle="bold" />
+                android:layout_marginTop="18dp">
+
+                <EditText
+                    android:id="@+id/password"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/edit_text_background"
+                    android:ems="10"
+                    android:hint="Type your password"
+                    android:inputType="textPassword"
+                    android:padding="12dp"
+                    android:textColorHint="#707070"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    />
+
+                <CheckBox
+                    android:id="@+id/showPasswordCheckBox"
+                    android:layout_width="171dp"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/password"
+                    android:layout_alignParentEnd="false"
+                    android:layout_alignParentRight="true"
+                    android:layout_marginTop="11dp"
+                    android:layout_marginRight="210dp"
+
+                    android:text="Show Password"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+            </RelativeLayout>
 
             <TextView
                 android:id="@+id/dateOfBirthTv"
@@ -194,7 +214,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="32dp"
-                android:text="Address"
+                android:text="City"
                 android:textColor="@color/black"
                 android:textSize="25sp"
                 android:textStyle="bold"
@@ -208,7 +228,7 @@
                 android:layout_marginTop="18dp"
                 android:background="@drawable/edit_text_background"
                 android:ems="10"
-                android:hint="Type your Address"
+                android:hint="Type your City"
                 android:inputType="text"
                 android:padding="12dp"
                 android:textColorHint="#707070"

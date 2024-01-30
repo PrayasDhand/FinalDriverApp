@@ -7,11 +7,14 @@ import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.Editable;
+import android.text.InputType;
 import android.text.TextWatcher;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -22,6 +25,11 @@ import com.google.firebase.database.FirebaseDatabase;
 public class RegistrationActivity extends AppCompatActivity {
 
     DatabaseHelper1 dbHelper = new DatabaseHelper1(this);
+    private EditText passwordEditText;
+    private CheckBox showPasswordCheckBox;
+
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,8 +46,16 @@ public class RegistrationActivity extends AppCompatActivity {
         // Set up the UI components
         EditText nameEditText = findViewById(R.id.edText1);
         EditText emailEditText = findViewById(R.id.editText2);
-        EditText passwordEditText = findViewById(R.id.editText3);
+        passwordEditText = findViewById(R.id.editText3);
         EditText contactEditText = findViewById(R.id.editText4);
+
+        showPasswordCheckBox = findViewById(R.id.showPasswordCheckBox);
+        showPasswordCheckBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            // Toggle password visibility based on CheckBox state
+            togglePasswordVisibility(isChecked);
+        });
+
+
 
         // Example: Set up a TextWatcher for name validation
         nameEditText.addTextChangedListener(new SimpleTextWatcher(nameEditText, this::validateName));
@@ -59,6 +75,20 @@ public class RegistrationActivity extends AppCompatActivity {
             handleRegistration();
         });
     }
+
+    private void togglePasswordVisibility(boolean showPassword) {
+        if (showPassword) {
+            // Show Password
+            passwordEditText.setInputType(InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
+        } else {
+            // Hide Password
+            passwordEditText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        }
+
+        // Move cursor to the end of the text
+        passwordEditText.setSelection(passwordEditText.length());
+    }
+
 
     void validateName(String name) {
         EditText nameEditText = findViewById(R.id.edText1);
@@ -224,6 +254,8 @@ public class RegistrationActivity extends AppCompatActivity {
         startActivity(intent);
         finish(); // Optional: finish the current activity to prevent going back to it
     }
+
+
 
     private class SimpleTextWatcher implements TextWatcher {
         private final EditText editText;

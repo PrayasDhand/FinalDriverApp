@@ -29,6 +29,9 @@ public class WelcomeDriverTest {
     @Mock
     private DatabaseReference mockedDatabaseReference;
 
+    @Mock
+    private android.app.Activity activity;
+
     @InjectMocks
     private WelcomeDriver welcomeDriver;
 

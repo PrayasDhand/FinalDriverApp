@@ -9,12 +9,14 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.text.Editable;
+import android.text.InputType;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 
+import android.widget.CheckBox;
 import android.widget.EditText;
 
 import android.widget.ImageView;
@@ -45,6 +47,7 @@ public class DriverRegistration extends AppCompatActivity {
     EditText fullNameEditText;
     EditText emailEditText;
     EditText passwordEditText;
+    private CheckBox showPasswordCheckBox;
 
     EditText vehicleEditText;
     private EditText addressEditText;
@@ -85,6 +88,12 @@ public class DriverRegistration extends AppCompatActivity {
         circularImageViewDriver = findViewById(R.id.circularImageViewDriver);
         circularImageViewDriver.setOnClickListener(this::onChooseDriverImageClick);
 
+        showPasswordCheckBox = findViewById(R.id.showPasswordCheckBox);
+        showPasswordCheckBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            // Toggle password visibility based on CheckBox state
+            togglePasswordVisibility(isChecked);
+        });
+
 
         AppCompatButton chooseLicenseImageBtn = findViewById(R.id.chooseLicenseImageBtn);
         chooseLicenseImageBtn.setOnClickListener(this::onChooseLicenseImageClick);
@@ -99,6 +108,19 @@ public class DriverRegistration extends AppCompatActivity {
         vehicleEditText.addTextChangedListener(new SimpleTextWatcher(vehicleEditText, this::validateVehicle));
         licenseNoEditText.addTextChangedListener(new SimpleTextWatcher(licenseNoEditText,this::validateLicenseNumber));
         contactEditText.addTextChangedListener(new SimpleTextWatcher(contactEditText, this::validateContact));
+    }
+
+    private void togglePasswordVisibility(boolean showPassword) {
+        if (showPassword) {
+            // Show Password
+            passwordEditText.setInputType(InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
+        } else {
+            // Hide Password
+            passwordEditText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        }
+
+        // Move cursor to the end of the text
+        passwordEditText.setSelection(passwordEditText.length());
     }
 
     void validateFullName(String fullName) {
