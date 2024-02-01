@@ -20,6 +20,7 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatButton;
@@ -45,6 +46,7 @@ public class DriverRegistration extends AppCompatActivity {
     private ImageView licenseImageView;
     private TextInputEditText dobEditText;
     EditText fullNameEditText;
+    private TextView profileImageText;
     EditText emailEditText;
     EditText passwordEditText;
     private CheckBox showPasswordCheckBox;
@@ -78,11 +80,14 @@ public class DriverRegistration extends AppCompatActivity {
         emailEditText = findViewById(R.id.email);
         passwordEditText = findViewById(R.id.password);
         dobEditText = findViewById(R.id.dobEditText);
+
+
         TextInputLayout datePickerLayout = findViewById(R.id.datePickerLayout);
         dobEditText.setOnClickListener(v -> showDatePickerDialog());
 
         vehicleEditText = findViewById(R.id.vehicleType);
         licenseNoEditText = findViewById(R.id.licenseNo);
+        profileImageText = findViewById(R.id.addProfileImageText);
         contactEditText = findViewById(R.id.contact);
         addressEditText = findViewById(R.id.address);
         circularImageViewDriver = findViewById(R.id.circularImageViewDriver);
@@ -354,7 +359,14 @@ public class DriverRegistration extends AppCompatActivity {
 
     private boolean verifyDetailsWithOCR(String ocrResult, String licenseNo) {
         // Check if the license number is present in the OCR result
-        return ocrResult.toLowerCase().contains(licenseNo.toLowerCase());
+        String ocrResultLowerCase = ocrResult.toLowerCase();
+
+        // Check if the license number and vehicle type are present in the OCR result
+        boolean licenseNumberMatch = ocrResultLowerCase.contains(licenseNo.toLowerCase());
+
+
+        // Both license number and vehicle type should match for successful validation
+        return licenseNumberMatch;
     }
 
 

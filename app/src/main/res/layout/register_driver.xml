@@ -63,6 +63,20 @@
                 app:layout_constraintTop_toBottomOf="@id/imageViewDriver" />
 
             <TextView
+                android:id="@+id/addProfileImageText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/circularImageViewDriver"
+                android:layout_centerHorizontal="true"
+                android:layout_marginStart="100dp"
+                android:layout_marginTop="10dp"
+                android:text="Add Profile Image"
+                android:textAlignment="center"
+                android:textColor="@color/black"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
                 android:id="@+id/DriverTv1"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -266,7 +280,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="32dp"
-                android:text="Vehicle Type"
+                android:text="License Type (Vehicle Type Authorized)"
                 android:textColor="@color/black"
                 android:textSize="25sp"
                 android:textStyle="bold" />
@@ -278,7 +292,7 @@
                 android:layout_marginTop="18dp"
                 android:background="@drawable/edit_text_background"
                 android:ems="10"
-                android:hint="Provide your Vehicle Type"
+                android:hint="Provide your License Type"
                 android:inputType="text"
                 android:padding="12dp"
                 android:textColorHint="#707070"
