@@ -16,7 +16,8 @@
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/top_background" />
+        app:srcCompat="@drawable/top_background"
+        android:contentDescription="login page topbar imageview" />
 
     <TextView
         android:id="@+id/textView2"

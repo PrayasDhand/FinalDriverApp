@@ -32,7 +32,7 @@ public class SplashActivityTest {
         splashActivity.handler.postDelayed(() -> {
             splashActivity.startActivity(mockIntent);
             splashActivity.finish();
-        }, 3000L);
+        }, 3000);
 
         Mockito.verify(mockHandler).postDelayed(any(), eq(3000L));
         Mockito.verify(splashActivity).startActivity(mockIntent);

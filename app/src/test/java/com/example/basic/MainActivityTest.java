@@ -10,7 +10,9 @@ import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
+import org.robolectric.shadows.ShadowApplication;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -24,19 +26,20 @@ public class MainActivityTest {
         assertNotNull(mainActivity);
     }
 
-//    @Test  public void testButtonClickShouldStartLoginActivity() {
-//        MainActivity mainActivity = Robolectric.buildActivity(MainActivity.class).create().get();
-//        AppCompatButton button = mainActivity.findViewById(R.id.button2);
-//
-//        assertNotNull(button);
-//
-//        // Perform click
-//        button.performClick();
-//
-//        // Check if LoginActivity is started
-//        Intent expectedIntent = new Intent(mainActivity, LoginActivity.class);
-//        assertTrue(Robolectric.getShadowApplication().getNextStartedActivity().filterEquals(expectedIntent));
-//    }
+    @Test
+    public void testButtonClickShouldStartLoginActivity() {
+        MainActivity mainActivity = Robolectric.buildActivity(MainActivity.class).create().get();
+        AppCompatButton button = mainActivity.findViewById(R.id.button2);
 
-    // Add more test cases as needed
+        assertNotNull(button);
+
+        // Perform click
+        button.performClick();
+
+        // Check if LoginActivity is started
+        Intent expectedIntent = new Intent(mainActivity, LoginActivity.class);
+        assertTrue(ShadowApplication.getInstance().getNextStartedActivity().filterEquals(expectedIntent));
+    }
+
+
 }
