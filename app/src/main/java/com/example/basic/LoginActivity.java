@@ -70,7 +70,25 @@ public class LoginActivity extends AppCompatActivity {
                     passwordEditText.getText().toString().trim()));
 
             emailEditText.addTextChangedListener(new SimpleTextWatcher(emailEditText, this::validateEmail));
+            passwordEditText.addTextChangedListener(new SimpleTextWatcher(passwordEditText, this::validatePassword));
         }
+    }
+
+    private void validatePassword(String password) {
+        // Use the correct ID for the password EditText
+        EditText passwordEditText = findViewById(R.id.passwordEditText);
+        int minLength = 5;
+        int maxLength = 16;
+
+        if (password.isEmpty() || !isStrongPassword(password) || password.length() < minLength || password.length() > maxLength) {
+            passwordEditText.setError("Password should be between 5 and 16 characters and contain one uppercase, one lowercase, and one special character");
+        } else {
+            passwordEditText.setError(null);
+        }
+    }
+
+    boolean isStrongPassword(String password) {
+        return password.matches(".*[A-Z].*") && password.matches(".*[a-z].*") && password.matches(".*[!@#$%^&*()-_+=<>?].*");
     }
 
     private void togglePasswordVisibility(boolean showPassword) {
@@ -92,29 +110,34 @@ public class LoginActivity extends AppCompatActivity {
         databaseReference.orderByChild("email").equalTo(email).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
+                boolean authenticationSuccessful = false;
+
                 if (dataSnapshot.exists()) {
                     for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                         String storedPassword = snapshot.child("password").getValue(String.class);
 
                         if (storedPassword != null && storedPassword.trim().equals(password)) {
                             String fullName = snapshot.child("name").getValue(String.class);
-                            String email = snapshot.child("email").getValue(String.class);
                             String contact = snapshot.child("contact").getValue(String.class);
 
                             saveUserDataToSharedPreferences(fullName, email, password, contact);
 
                             saveLoginState();
                             redirectToRegisterDriver();
-                            return; // Exit the loop if authentication is successful
-                        } else {
-                            Log.d(TAG, "Stored Password: " + storedPassword);
-                            Log.d(TAG, "Entered Password: " + password);
-                            Toast.makeText(LoginActivity.this, "Invalid Password", Toast.LENGTH_SHORT).show();
+                            authenticationSuccessful = true;
+                            break; // Exit the loop if authentication is successful
                         }
                     }
-                } else {
-                    Log.d(TAG, "User not found for email: " + email);
-                    Toast.makeText(LoginActivity.this, "User not found", Toast.LENGTH_SHORT).show();
+                }
+
+                if (!authenticationSuccessful) {
+                    if (dataSnapshot.exists()) {
+                        Log.d(TAG, "Invalid Password");
+                        Toast.makeText(LoginActivity.this, "Invalid Password", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Log.d(TAG, "User not found for email: " + email);
+                        Toast.makeText(LoginActivity.this, "User not found", Toast.LENGTH_SHORT).show();
+                    }
                 }
             }
 
@@ -125,6 +148,7 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
     }
+
 
     private void saveUserDataToSharedPreferences(String fullName, String email, String password, String contact) {
         SharedPreferences sharedPreferences = getSharedPreferences("userPrefs", Context.MODE_PRIVATE);
