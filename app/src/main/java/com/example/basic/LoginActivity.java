@@ -28,6 +28,7 @@ import com.google.firebase.database.ValueEventListener;
 public class LoginActivity extends AppCompatActivity {
 
     private static final String TAG = "LoginActivity";
+    public SharedPreferences sharedPreferences;
     private EditText passwordEditText;
     private CheckBox showPasswordCheckBox;
 
@@ -105,6 +106,12 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void authenticateFirebase(String email, String password) {
+        if (email.isEmpty() || password.isEmpty()) {
+            // Show toast for empty email or password
+            Toast.makeText(LoginActivity.this, "Please enter details", Toast.LENGTH_SHORT).show();
+            return; // Return from the method to prevent further execution
+        }
+
         DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference().child("drivers");
 
         databaseReference.orderByChild("email").equalTo(email).addListenerForSingleValueEvent(new ValueEventListener() {
@@ -150,7 +157,7 @@ public class LoginActivity extends AppCompatActivity {
     }
 
 
-    private void saveUserDataToSharedPreferences(String fullName, String email, String password, String contact) {
+    void saveUserDataToSharedPreferences(String fullName, String email, String password, String contact) {
         SharedPreferences sharedPreferences = getSharedPreferences("userPrefs", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putString("fullName", fullName);

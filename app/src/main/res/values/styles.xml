@@ -30,4 +30,19 @@
         <item name="android:textSize">20sp</item>
         <item name="android:textStyle">bold</item>
     </style>
+
+    <style name="Theme.Basic.Night" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- ... other night mode theme attributes -->
+
+        <!-- Text color for TextViews -->
+        <item name="android:textColor">@android:color/white</item>
+
+        <!-- Text color for EditTexts -->
+        <item name="colorControlNormal">@android:color/white</item>
+
+        <!-- Text color for hints in EditTexts -->
+        <item name="android:textColorHint">@android:color/black</item>
+    </style>
+
+
 </resources>

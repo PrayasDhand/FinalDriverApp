@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
@@ -14,19 +15,18 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final int DATABASE_VERSION = 3;
 
     static final String TABLE_NAME = "DriversList";
-    private static final String COLUMN_ID = "id";
+    static final String COLUMN_ID = "id";
     static final String COLUMN_FIRST_NAME = "firstname";
     static final String COLUMN_EMAIL = "email";
-    private static final String COLUMN_PASSWORD = "password";
-    private static final String COLUMN_DOB = "dob";
-    private static final String COLUMN_CONTACT = "contact";
-    private static final String COLUMN_ADDRESS = "address";
-    private static final String COLUMN_LICENSE_NUMBER = "licensenumber";
-
-    private static final String COLUMN_VEHICLE_TYPE = "vehicletype";
+    static final String COLUMN_PASSWORD = "password";
+    static final String COLUMN_DOB = "dob";
+    static final String COLUMN_CONTACT = "contact";
+    static final String COLUMN_ADDRESS = "address";
+    static final String COLUMN_LICENSE_NUMBER = "licensenumber";
+    static final String COLUMN_VEHICLE_TYPE = "vehicletype";
 
     public DatabaseHelper(@Nullable Context context) {
-        super(context, DATABASE_NAME, null , DATABASE_VERSION );
+        super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
     @Override
@@ -45,7 +45,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         try {
             db.execSQL(createTable);
             Log.d("DatabaseHelper", "Table created successfully");
-        } catch (Exception e) {
+        } catch (SQLiteException e) {
             Log.e("DatabaseHelper", "Error creating table: " + e.getMessage());
         }
     }
@@ -56,57 +56,55 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         onCreate(db);
     }
 
-    public boolean insertUser(String fullName, String email, String password, String dob, String contact,String address, String licenseNo, String vehicleType) {
-        SQLiteDatabase db = this.getWritableDatabase();
-        ContentValues contentValues = new ContentValues();
-        contentValues.put(COLUMN_FIRST_NAME, fullName);
-        contentValues.put(COLUMN_EMAIL, email);
-        contentValues.put(COLUMN_PASSWORD, password);
-        contentValues.put(COLUMN_DOB, dob);
-        contentValues.put(COLUMN_CONTACT, contact);
-        contentValues.put(COLUMN_ADDRESS,address);
-        contentValues.put(COLUMN_LICENSE_NUMBER, licenseNo);
-        contentValues.put(COLUMN_VEHICLE_TYPE, vehicleType);
+    public boolean insertUser(String fullName, String email, String password, String dob, String contact, String address, String licenseNo, String vehicleType) {
+        try (SQLiteDatabase db = this.getWritableDatabase()) {
+            ContentValues contentValues = new ContentValues();
+            contentValues.put(COLUMN_FIRST_NAME, fullName);
+            contentValues.put(COLUMN_EMAIL, email);
+            contentValues.put(COLUMN_PASSWORD, password);
+            contentValues.put(COLUMN_DOB, dob);
+            contentValues.put(COLUMN_CONTACT, contact);
+            contentValues.put(COLUMN_ADDRESS, address);
+            contentValues.put(COLUMN_LICENSE_NUMBER, licenseNo);
+            contentValues.put(COLUMN_VEHICLE_TYPE, vehicleType);
 
-        long result = db.insert(TABLE_NAME, null, contentValues);
-        return result != -1;
+            long result = db.insert(TABLE_NAME, null, contentValues);
+            return result != -1;
+        } catch (SQLiteException e) {
+            Log.e("DatabaseHelper", "Error inserting user: " + e.getMessage());
+            return false;
+        }
     }
 
-
-
     public boolean doesUserExist(String ocrFirstName, String ocrLastName, String ocrEmail, String ocrPassword) {
-        SQLiteDatabase db = this.getReadableDatabase();
-        String query = "SELECT * FROM " + TABLE_NAME +
-                " WHERE " + COLUMN_FIRST_NAME + " = ? AND " +
-                COLUMN_EMAIL + " = ? AND " +
-                COLUMN_PASSWORD + " = ?";
-        String[] selectionArgs = {ocrFirstName + " " + ocrLastName, ocrEmail, ocrPassword};
-        Cursor cursor = db.rawQuery(query, selectionArgs);
-
-        boolean userExists = cursor.getCount() > 0;
-
-        cursor.close();
-        return userExists;
+        try (SQLiteDatabase db = this.getReadableDatabase()) {
+            String query = "SELECT * FROM " + TABLE_NAME +
+                    " WHERE " + COLUMN_FIRST_NAME + " = ? AND " +
+                    COLUMN_EMAIL + " = ? AND " +
+                    COLUMN_PASSWORD + " = ?";
+            String[] selectionArgs = {ocrFirstName + " " + ocrLastName, ocrEmail, ocrPassword};
+            try (Cursor cursor = db.rawQuery(query, selectionArgs)) {
+                return cursor.getCount() > 0;
+            }
+        } catch (SQLiteException e) {
+            Log.e("DatabaseHelper", "Error checking user existence: " + e.getMessage());
+            return false;
+        }
     }
 
     public boolean isDriverAlreadyRegistered(String licenseNo) {
-        SQLiteDatabase db = this.getReadableDatabase();
-        Cursor cursor = null;
-
-        try {
-            String[] columns = {COLUMN_LICENSE_NUMBER};
-            String selection = COLUMN_LICENSE_NUMBER + " = ?";
-            String[] selectionArgs = {licenseNo};
-
-            cursor = db.query(TABLE_NAME, columns, selection, selectionArgs, null, null, null);
-
-            // Move to the first row in the result set
+        try (SQLiteDatabase db = this.getReadableDatabase(); Cursor cursor = db.query(
+                TABLE_NAME,
+                new String[]{COLUMN_LICENSE_NUMBER},
+                COLUMN_LICENSE_NUMBER + " = ?",
+                new String[]{licenseNo},
+                null,
+                null,
+                null)) {
             return cursor.moveToFirst();
-        } finally {
-            if (cursor != null) {
-                cursor.close();
-            }
-            db.close();
+        } catch (SQLiteException e) {
+            Log.e("DatabaseHelper", "Error checking driver registration: " + e.getMessage());
+            return false;
         }
     }
 }

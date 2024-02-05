@@ -55,6 +55,7 @@ android {
             property "sonar.projectKey", "DriveU-Driver-Registration-App"    // Update with your SonarQube project key
             property "sonar.projectName", "DriveU-Driver Registration App"
             property "sonar.projectVersion", "1.0"
+            property "sonar.jacoco.reportPaths", "build/jacoco/testDebugUnitTest.exec" // Update with the correct path
             // Add more properties as needed
         }
     }
@@ -69,11 +70,13 @@ jacoco {
 dependencies {
     implementation 'de.hdodenhof:circleimageview:3.1.0'
     implementation 'com.rmtheis:tess-two:9.1.0'
-    implementation 'com.google.android.gms:play-services-auth:20.7.0'
+    implementation 'com.google.android.gms:play-services-auth:20.1.0'
     implementation 'androidx.appcompat:appcompat:1.2.0'
     implementation 'com.google.android.material:material:1.2.1'
     implementation 'androidx.constraintlayout:constraintlayout:2.0.1'
     implementation 'com.google.firebase:firebase-database:19.2.1'
+    implementation 'com.google.firebase:firebase-auth:20.0.2'
+
 
     // Use a specific version for JUnit
     testImplementation 'junit:junit:4.13.2'

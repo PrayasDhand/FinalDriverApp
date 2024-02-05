@@ -2,7 +2,7 @@ package com.example.basic;
 
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
-import android.content.DialogInterface;
+
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
@@ -46,10 +46,8 @@ public class DriverRegistration extends AppCompatActivity {
     private ImageView licenseImageView;
     private TextInputEditText dobEditText;
     EditText fullNameEditText;
-    private TextView profileImageText;
     EditText emailEditText;
     EditText passwordEditText;
-    private CheckBox showPasswordCheckBox;
 
     EditText vehicleEditText;
     private EditText addressEditText;
@@ -87,13 +85,13 @@ public class DriverRegistration extends AppCompatActivity {
 
         vehicleEditText = findViewById(R.id.vehicleType);
         licenseNoEditText = findViewById(R.id.licenseNo);
-        profileImageText = findViewById(R.id.addProfileImageText);
+        TextView profileImageText = findViewById(R.id.addProfileImageText);
         contactEditText = findViewById(R.id.contact);
         addressEditText = findViewById(R.id.address);
         circularImageViewDriver = findViewById(R.id.circularImageViewDriver);
         circularImageViewDriver.setOnClickListener(this::onChooseDriverImageClick);
 
-        showPasswordCheckBox = findViewById(R.id.showPasswordCheckBox);
+        CheckBox showPasswordCheckBox = findViewById(R.id.showPasswordCheckBox);
         showPasswordCheckBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
             // Toggle password visibility based on CheckBox state
             togglePasswordVisibility(isChecked);
