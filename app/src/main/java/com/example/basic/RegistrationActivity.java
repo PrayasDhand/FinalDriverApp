@@ -2,6 +2,7 @@ package com.example.basic;
 
 import android.content.ContentValues;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
@@ -19,6 +20,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
@@ -166,10 +168,52 @@ public class RegistrationActivity extends AppCompatActivity {
             return;
         }
 
-
         // Create a Driver object
         Driver driver = new Driver(0, name, email, password, contact);
 
+        // Register user with Firebase Authentication
+        FirebaseAuth.getInstance().createUserWithEmailAndPassword(email, password)
+                .addOnCompleteListener(this, task -> {
+                    if (task.isSuccessful()) {
+                        // Firebase Authentication successful
+                        saveUserDataToSharedPreferences(name, email, password, contact);
+
+                        // Save user data to SQLite database
+                        saveUserDataToSQLite(driver);
+
+                        // Save user data to Firebase Realtime Database
+                        saveUserDataToFirebase(driver);
+
+                        // Show a toast indicating successful registration
+                        Toast.makeText(this, "Data saved successfully", Toast.LENGTH_SHORT).show();
+
+                        // Use a Handler to delay the redirection to LoginActivity
+                        new Handler().postDelayed(() -> {
+                            // Redirect to LoginActivity
+                            Intent intent = new Intent(this, LoginActivity.class);
+                            startActivity(intent);
+
+                            // Finish the current activity to remove it from the stack
+                            finish();
+                        }, 2000); // Delay in milliseconds (e.g., 2000 milliseconds = 2 seconds)
+                    } else {
+                        // If registration fails, display a message to the user.
+                        Toast.makeText(this, "Registration failed", Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    void saveUserDataToFirebase(Driver driver) {
+        // Open the Firebase Realtime Database reference
+        DatabaseReference firebaseRef = FirebaseDatabase.getInstance().getReference("drivers");
+
+        // Push the data to the Firebase Realtime Database
+        String firebaseKey = firebaseRef.push().getKey();
+        DatabaseReference driverRef = firebaseRef.child(firebaseKey);
+        driverRef.setValue(driver);
+    }
+
+    void saveUserDataToSQLite(Driver driver) {
         // Open the SQLite database
         SQLiteDatabase db = dbHelper.getWritableDatabase();
 
@@ -181,36 +225,22 @@ public class RegistrationActivity extends AppCompatActivity {
         values.put("contact", driver.getContact());
 
         // Insert the data into the SQLite database
-        long rowId = db.insert("Drivers", null, values);
+        db.insert("Drivers", null, values);
 
         // Close the SQLite database
         db.close();
+    }
 
-        // Open the Firebase Realtime Database reference
-        DatabaseReference firebaseRef = FirebaseDatabase.getInstance().getReference("drivers");
+    void saveUserDataToSharedPreferences(String name, String email, String password, String contact) {
+        SharedPreferences preferences = getSharedPreferences("userPrefs", MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
 
-        // Push the data to the Firebase Realtime Database
-        String firebaseKey = firebaseRef.push().getKey();
-        DatabaseReference driverRef = firebaseRef.child(firebaseKey);
-        driverRef.setValue(driver);
+        editor.putString("fullName", name);
+        editor.putString("email", email);
+        editor.putString("password", password);
+        editor.putString("contact", contact);
 
-        if (rowId > 0) {
-            // Show a toast indicating successful registration
-            Toast.makeText(this, "Data saved successfully", Toast.LENGTH_SHORT).show();
-
-            // Use a Handler to delay the redirection to LoginActivity
-            new Handler().postDelayed(() -> {
-                // Redirect to LoginActivity
-                Intent intent = new Intent(this, LoginActivity.class);
-                startActivity(intent);
-
-                // Finish the current activity to remove it from the stack
-                finish();
-            }, 2000); // Delay in milliseconds (e.g., 2000 milliseconds = 2 seconds)
-        } else {
-            // Show a toast indicating that data was not saved
-            Toast.makeText(this, "Data not saved", Toast.LENGTH_SHORT).show();
-        }
+        editor.apply();
     }
 
     boolean isUserAlreadyRegistered(String email) {

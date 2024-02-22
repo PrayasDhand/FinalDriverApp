@@ -1,8 +1,11 @@
 package com.example.basic;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.InputType;
@@ -17,13 +20,13 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.AppCompatButton;
 
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -31,7 +34,6 @@ public class LoginActivity extends AppCompatActivity {
     public SharedPreferences sharedPreferences;
     private EditText passwordEditText;
     private CheckBox showPasswordCheckBox;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,6 +47,8 @@ public class LoginActivity extends AppCompatActivity {
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.login_page);
 
+        FirebaseApp.initializeApp(this);
+
         try (DatabaseHelper1 databaseHelper = new DatabaseHelper1(this)) {
 
             if (isLoggedIn()) {
@@ -55,6 +59,7 @@ public class LoginActivity extends AppCompatActivity {
             TextView registerTextView = findViewById(R.id.textView6);
             EditText emailEditText = findViewById(R.id.emailEditText);
             passwordEditText = findViewById(R.id.passwordEditText);
+            TextView forgotPasswordTextView = findViewById(R.id.forgotPasswordTextView);
             showPasswordCheckBox = findViewById(R.id.showPasswordCheckBox);
             showPasswordCheckBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
                 // Toggle password visibility based on CheckBox state
@@ -67,13 +72,60 @@ public class LoginActivity extends AppCompatActivity {
                 startActivity(intent);
             });
 
-            loginBtn.setOnClickListener(v -> authenticateFirebase(emailEditText.getText().toString().trim(),
-                    passwordEditText.getText().toString().trim()));
+            loginBtn.setOnClickListener(v -> {
+                String email = emailEditText.getText().toString().trim();
+                String password = passwordEditText.getText().toString().trim();
+                authenticateFirebase(email, password);
+            });
+            forgotPasswordTextView.setOnClickListener(v -> showForgotPasswordDialog());
 
             emailEditText.addTextChangedListener(new SimpleTextWatcher(emailEditText, this::validateEmail));
             passwordEditText.addTextChangedListener(new SimpleTextWatcher(passwordEditText, this::validatePassword));
         }
     }
+
+    private void showForgotPasswordDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View dialogView = getLayoutInflater().inflate(R.layout.custom_alert_dialog, null);
+        builder.setView(dialogView);
+
+        TextView titleTextView = dialogView.findViewById(R.id.alertTitleTextView);
+        EditText emailEditText = dialogView.findViewById(R.id.alertEmailEditText);
+        AppCompatButton resetPasswordButton = dialogView.findViewById(R.id.resetPasswordButton);
+        AppCompatButton cancelButton = dialogView.findViewById(R.id.cancelButton);
+
+        titleTextView.setTypeface(null, Typeface.BOLD);
+
+        AlertDialog alertDialog = builder.create();
+
+        // Set OnClickListener for the "Cancel" button to dismiss the dialog
+        cancelButton.setOnClickListener(view -> alertDialog.dismiss());
+
+        resetPasswordButton.setOnClickListener(view -> {
+            String email = emailEditText.getText().toString().trim();
+            if (!email.isEmpty() && isValidEmail(email)) {
+                resetPassword(email);
+                alertDialog.dismiss(); // Dismiss the dialog after initiating the password reset
+            } else {
+                Toast.makeText(LoginActivity.this, "Please enter a valid email address", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        alertDialog.show();
+    }
+
+    private void resetPassword(String email) {
+        // Use Firebase password reset mechanism
+        FirebaseAuth.getInstance().sendPasswordResetEmail(email)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        Toast.makeText(LoginActivity.this, "Password reset email sent. Please check your inbox.", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(LoginActivity.this, "Failed to send password reset email. Please try again.", Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
 
     private void validatePassword(String password) {
         // Use the correct ID for the password EditText
@@ -112,50 +164,28 @@ public class LoginActivity extends AppCompatActivity {
             return; // Return from the method to prevent further execution
         }
 
-        DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference().child("drivers");
-
-        databaseReference.orderByChild("email").equalTo(email).addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                boolean authenticationSuccessful = false;
-
-                if (dataSnapshot.exists()) {
-                    for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                        String storedPassword = snapshot.child("password").getValue(String.class);
-
-                        if (storedPassword != null && storedPassword.trim().equals(password)) {
-                            String fullName = snapshot.child("name").getValue(String.class);
-                            String contact = snapshot.child("contact").getValue(String.class);
+        // Authenticate with Firebase
+        FirebaseAuth.getInstance().signInWithEmailAndPassword(email, password)
+                .addOnCompleteListener(this, task -> {
+                    if (task.isSuccessful()) {
+                        // Authentication successful
+                        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                        if (user != null) {
+                            String fullName = "";  // Retrieve user details from Firebase if needed
+                            String contact = "";
 
                             saveUserDataToSharedPreferences(fullName, email, password, contact);
 
                             saveLoginState();
                             redirectToRegisterDriver();
-                            authenticationSuccessful = true;
-                            break; // Exit the loop if authentication is successful
                         }
-                    }
-                }
-
-                if (!authenticationSuccessful) {
-                    if (dataSnapshot.exists()) {
-                        Log.d(TAG, "Invalid Password");
-                        Toast.makeText(LoginActivity.this, "Invalid Password", Toast.LENGTH_SHORT).show();
                     } else {
-                        Log.d(TAG, "User not found for email: " + email);
-                        Toast.makeText(LoginActivity.this, "User not found", Toast.LENGTH_SHORT).show();
+                        // If authentication fails, display a message to the user.
+                        Log.e(TAG, "Authentication failed: " + task.getException());
+                        Toast.makeText(LoginActivity.this, "Invalid credentials", Toast.LENGTH_SHORT).show();
                     }
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                Log.e(TAG, "Database Error: " + databaseError.getMessage());
-                Toast.makeText(LoginActivity.this, "Database Error", Toast.LENGTH_SHORT).show();
-            }
-        });
+                });
     }
-
 
     void saveUserDataToSharedPreferences(String fullName, String email, String password, String contact) {
         SharedPreferences sharedPreferences = getSharedPreferences("userPrefs", Context.MODE_PRIVATE);

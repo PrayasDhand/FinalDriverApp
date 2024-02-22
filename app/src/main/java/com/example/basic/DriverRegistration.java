@@ -312,7 +312,7 @@ public class DriverRegistration extends AppCompatActivity {
                 // Log the OCR result before extraction
                 Log.d("OCR", "Original OCR Result: " + ocrResultFromImage);
 
-                boolean detailsVerified = verifyDetailsWithOCR(ocrResultFromImage, licenseNo);
+                boolean detailsVerified = verifyDetailsWithOCR(ocrResultFromImage, licenseNo,vehicleType);
 
                 if (detailsVerified) {
                     // Proceed with registration
@@ -355,16 +355,17 @@ public class DriverRegistration extends AppCompatActivity {
         return databaseHelper.isDriverAlreadyRegistered(licenseNo);
     }
 
-    private boolean verifyDetailsWithOCR(String ocrResult, String licenseNo) {
+    private boolean verifyDetailsWithOCR(String ocrResult, String licenseNo,String vehicleType) {
         // Check if the license number is present in the OCR result
         String ocrResultLowerCase = ocrResult.toLowerCase();
 
         // Check if the license number and vehicle type are present in the OCR result
         boolean licenseNumberMatch = ocrResultLowerCase.contains(licenseNo.toLowerCase());
+        boolean vehicleTypeMatch = ocrResultLowerCase.contains(vehicleType.toLowerCase());
 
 
         // Both license number and vehicle type should match for successful validation
-        return licenseNumberMatch;
+        return licenseNumberMatch && vehicleTypeMatch;
     }
 
 

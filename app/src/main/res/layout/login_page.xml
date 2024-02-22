@@ -95,19 +95,39 @@
                 android:textStyle="bold"
                 />
 
+
+
             <CheckBox
                 android:id="@+id/showPasswordCheckBox"
-                android:layout_width="187dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_below="@id/passwordEditText"
                 android:layout_alignParentEnd="false"
                 android:layout_alignParentRight="true"
                 android:layout_marginTop="11dp"
-                android:layout_marginRight="181dp"
-
+                android:layout_marginEnd="16dp"
                 android:text="Show Password"
                 android:textSize="16sp"
                 android:textStyle="bold" />
+
+            <!-- Forgot Password? TextView -->
+            <TextView
+                android:id="@+id/forgotPasswordTextView"
+                android:layout_width="168dp"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/passwordEditText"
+                android:layout_marginTop="16dp"
+                android:layout_marginEnd="21dp"
+                android:layout_marginRight="21dp"
+                android:layout_toStartOf="@id/showPasswordCheckBox"
+                android:layout_toLeftOf="@id/showPasswordCheckBox"
+                android:padding="8dp"
+                android:text="Forgot Password?"
+                android:textColor="@android:color/holo_blue_dark"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+
         </RelativeLayout>
 
         <TextView
@@ -131,6 +151,8 @@
             android:text="Login"
             android:textSize="20sp"
             android:textStyle="bold" />
+
+
 
 <!--        <TextView-->
 <!--            android:id="@+id/ortext"-->
